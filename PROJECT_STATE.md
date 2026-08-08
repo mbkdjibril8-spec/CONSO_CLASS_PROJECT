@@ -50,6 +50,9 @@ Toutes vérifiées en conditions réelles (HTTP via curl, avec remise à zéro d
 - Taux de change : lecture/écriture pour une période ouverte ✅ ; période clôturée (janvier 2026) → champs en lecture seule côté UI **et** écriture forcée rejetée côté serveur, valeur inchangée.
 - RBAC sur les nouvelles routes : préparateur → 403 sur `/subsidiaries` et `/exchange-rates` (200 sur `/periods`, lecture seule accordée à tous) ; DAF (lecture seule) → 200 sur `/subsidiaries` mais 403 sur `/subsidiaries/create`.
 
+## Ajustements UI (hors phase, sur retour utilisateur)
+- Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
+
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).
 - Répertoires `app/controllers`, `app/models`, etc. restent en minuscules (conformes à l'arborescence du cahier des charges) ; les classes utilisent des namespaces `App\Controllers`, `App\Models`... en PascalCase — l'autoloader fait la conversion de casse.
