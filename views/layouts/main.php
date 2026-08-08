@@ -33,10 +33,21 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
         </div>
     </header>
 
-    <?php if ($user): ?>
+    <?php if ($user):
+        $navLink = function (string $path, string $label) use ($currentPath) {
+            $active = $currentPath === base_url($path) || str_starts_with($currentPath, base_url($path) . '/');
+            echo '<a href="' . h(base_url($path)) . '" class="' . ($active ? 'active' : '') . '">' . h($label) . '</a>';
+        };
+    ?>
     <aside class="app-sidebar">
         <nav>
-            <a href="<?= h(base_url('dashboard')) ?>" class="<?= str_contains($currentPath, '/dashboard') ? 'active' : '' ?>">Tableau de bord</a>
+            <?php $navLink('dashboard', 'Tableau de bord'); ?>
+            <?php if ($user->isGroupLevel()): ?>
+                <?php $navLink('subsidiaries', 'Filiales'); ?>
+                <?php $navLink('subsidiaries/tree', 'Hiérarchie'); ?>
+                <?php $navLink('exchange-rates', 'Taux de change'); ?>
+            <?php endif; ?>
+            <?php $navLink('periods', 'Périodes'); ?>
         </nav>
     </aside>
     <?php endif; ?>

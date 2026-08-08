@@ -27,7 +27,10 @@
     </div>
 
     <div class="panel">
-        <div class="panel-title">Structure de groupe</div>
+        <div class="panel-title">
+            Structure de groupe
+            <a href="<?= h(base_url('subsidiaries/tree')) ?>" style="float:right;font-weight:normal;text-transform:none;letter-spacing:normal">Voir la hiérarchie &rarr;</a>
+        </div>
         <?php if (empty($subsidiaries)): ?>
             <div class="empty-state">Aucune filiale enregistrée.</div>
         <?php else: ?>

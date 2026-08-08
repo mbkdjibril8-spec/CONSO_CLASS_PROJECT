@@ -35,6 +35,8 @@ use App\Core\Router;
 use App\Core\Session;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
+use App\Controllers\ExchangeRateController;
+use App\Controllers\PeriodController;
 use App\Controllers\SubsidiaryController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\AuthorizationMiddleware;
@@ -45,6 +47,22 @@ Session::start();
 
 $auth = new AuthMiddleware();
 $csrf = new CsrfMiddleware();
+
+// Rôles ayant une visibilité groupe (structure, taux de change).
+$groupRoles = AuthorizationMiddleware::role([
+    Role::GROUP_ADMIN,
+    Role::CONSOLIDATION_MANAGER,
+    Role::CFO_READONLY,
+]);
+$adminOnly = AuthorizationMiddleware::role([Role::GROUP_ADMIN]);
+$periodManagers = AuthorizationMiddleware::role([Role::GROUP_ADMIN, Role::CONSOLIDATION_MANAGER]);
+$allRoles = AuthorizationMiddleware::role([
+    Role::GROUP_ADMIN,
+    Role::PREPARER,
+    Role::SUBSIDIARY_CONTROLLER,
+    Role::CONSOLIDATION_MANAGER,
+    Role::CFO_READONLY,
+]);
 
 $router = new Router();
 
@@ -57,21 +75,28 @@ $router->post('/logout', [AuthController::class, 'logout'], [$auth, $csrf]);
 // --- Tableau de bord (accueil authentifié, contenu adapté au rôle) ----
 $router->get('/dashboard', [DashboardController::class, 'index'], [$auth]);
 
-// --- Filiales (lecture seule en Phase 1 — CRUD complet en Phase 2) ----
-// Tous les rôles authentifiés peuvent consulter une fiche filiale, mais
-// AuthorizationMiddleware::subsidiaryScope restreint préparateur/contrôleur
-// à leur propre filiale.
-$router->get('/subsidiaries/{id}', [SubsidiaryController::class, 'show'], [
-    $auth,
-    AuthorizationMiddleware::role([
-        Role::GROUP_ADMIN,
-        Role::PREPARER,
-        Role::SUBSIDIARY_CONTROLLER,
-        Role::CONSOLIDATION_MANAGER,
-        Role::CFO_READONLY,
-    ]),
-    AuthorizationMiddleware::subsidiaryScope('id'),
-]);
+// --- Filiales -----------------------------------------------------------
+// Routes statiques déclarées AVANT la route dynamique {id} (le routeur
+// retient la première correspondance).
+$router->get('/subsidiaries', [SubsidiaryController::class, 'index'], [$auth, $groupRoles]);
+$router->get('/subsidiaries/tree', [SubsidiaryController::class, 'tree'], [$auth, $groupRoles]);
+$router->get('/subsidiaries/create', [SubsidiaryController::class, 'createForm'], [$auth, $adminOnly]);
+$router->post('/subsidiaries', [SubsidiaryController::class, 'store'], [$auth, $adminOnly, $csrf]);
+
+// Fiche filiale : accessible à tous les rôles authentifiés, mais restreinte
+// à sa propre filiale pour préparateur/contrôleur (AuthorizationMiddleware::subsidiaryScope).
+$router->get('/subsidiaries/{id}', [SubsidiaryController::class, 'show'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('id')]);
+$router->get('/subsidiaries/{id}/edit', [SubsidiaryController::class, 'editForm'], [$auth, $adminOnly]);
+$router->post('/subsidiaries/{id}', [SubsidiaryController::class, 'update'], [$auth, $adminOnly, $csrf]);
+$router->post('/subsidiaries/{id}/toggle-active', [SubsidiaryController::class, 'toggleActive'], [$auth, $adminOnly, $csrf]);
+
+// --- Périodes de reporting -----------------------------------------------
+$router->get('/periods', [PeriodController::class, 'index'], [$auth]);
+$router->post('/periods/{id}/transition', [PeriodController::class, 'transition'], [$auth, $periodManagers, $csrf]);
+
+// --- Taux de change --------------------------------------------------------
+$router->get('/exchange-rates', [ExchangeRateController::class, 'index'], [$auth, $groupRoles]);
+$router->post('/exchange-rates', [ExchangeRateController::class, 'store'], [$auth, $adminOnly, $csrf]);
 
 $request = new Request();
 $router->dispatch($request);

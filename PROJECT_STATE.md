@@ -1,8 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 1 — Fondation : TERMINÉE ✅**
-Prochaine étape : Phase 2 — Structure de groupe + périodes.
+**Phase 2 — Structure de groupe + périodes : TERMINÉE ✅**
+Prochaine étape : Phase 3 — Collecte des données + validation.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -31,6 +31,25 @@ Toutes vérifiées en conditions réelles (Apache + PHP 8.0.30 + MariaDB 10.4, r
 - Préparateur Sénégal (filiale id=2) : accès à `/subsidiaries/2` → 200 ; accès à `/subsidiaries/3` (Côte d'Ivoire) → 403 + entrée `audit_logs` avec le motif exact.
 - Tentative de connexion avec mauvais mot de passe → entrée `audit_logs` (action `login_failed`), aucune session créée.
 
+## Phase 2 — Réalisé
+- `SubsidiaryService` : validation complète (code unique, devise existante, absence de cycle dans la hiérarchie via `ancestorIds()`, pourcentages 0-100, méthode de consolidation valide), création/édition, activation/désactivation (pas de suppression physique — traçabilité), construction de l'arbre de hiérarchie.
+- Écrans filiales : liste (`/subsidiaries`), arbre de hiérarchie récursif (`/subsidiaries/tree`), création/édition avec ré-affichage des erreurs par champ, fiche filiale enrichie (société mère, actions Modifier/Désactiver réservées à l'administrateur groupe).
+- `PeriodService` : cycle de vie strictement séquentiel (`Open → In Progress → Submitted → Under Review → Validated → Consolidated → Closed`), aucun saut ni retour en arrière — vérifié y compris par contournement direct du formulaire (POST forgé), rejeté côté serveur avec message explicite.
+- `ExchangeRateService` : upsert des taux moyen/clôture par devise et par période ; période clôturée = verrouillée (vérifié par tentative d'écriture forcée sur janvier 2026, rejetée, valeur inchangée en base).
+- Toutes les mutations (création/édition/activation filiale, transition période, mise à jour des taux) journalisées dans `audit_logs` avec ancienne/nouvelle valeur.
+- Navigation latérale enrichie selon le rôle : rôles groupe voient Filiales/Hiérarchie/Taux de change en plus de Tableau de bord/Périodes ; rôles filiale ne voient que Tableau de bord/Périodes (lecture seule, utile pour connaître le statut de la période en cours).
+- `Controller::view()` injecte désormais automatiquement `$user` (depuis la session) dans toutes les vues, évitant d'avoir à le repasser manuellement à chaque `view()` (corrige un oubli potentiel identifié pendant les tests).
+
+## Vérifications exécutées (DoD Phase 2)
+Toutes vérifiées en conditions réelles (HTTP via curl, avec remise à zéro de la base entre les scénarios destructifs) :
+- Création filiale : code dupliqué → erreur de validation affichée, aucune insertion ; création valide → filiale visible immédiatement (donnée réelle, pas de cache).
+- Édition + activation/désactivation d'une filiale : changements persistés et journalisés (`audit_logs` : `update`, `deactivate`, `activate`).
+- Arbre de hiérarchie : NOVA Holding en racine, 6 filiales en enfants, badges méthode/pourcentage corrects.
+- Transition de période : Décembre `in_progress → submitted` par l'administrateur ✅ ; tentative de saut direct vers `closed` (requête forgée) → rejetée avec message explicite, statut inchangé.
+- Responsable consolidation : peut aussi transitionner une période (`submitted → under_review`) ✅.
+- Taux de change : lecture/écriture pour une période ouverte ✅ ; période clôturée (janvier 2026) → champs en lecture seule côté UI **et** écriture forcée rejetée côté serveur, valeur inchangée.
+- RBAC sur les nouvelles routes : préparateur → 403 sur `/subsidiaries` et `/exchange-rates` (200 sur `/periods`, lecture seule accordée à tous) ; DAF (lecture seule) → 200 sur `/subsidiaries` mais 403 sur `/subsidiaries/create`.
+
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).
 - Répertoires `app/controllers`, `app/models`, etc. restent en minuscules (conformes à l'arborescence du cahier des charges) ; les classes utilisent des namespaces `App\Controllers`, `App\Models`... en PascalCase — l'autoloader fait la conversion de casse.
@@ -40,8 +59,7 @@ Toutes vérifiées en conditions réelles (Apache + PHP 8.0.30 + MariaDB 10.4, r
 ## Cuts / V2 backlog
 (Rien à ce stade — hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.)
 
-## Prochaines étapes (Phase 2)
-- CRUD filiales (créer/éditer, avec le même formulaire couvrant les champs du schéma).
-- Vue arbre de hiérarchie (parent → filiales).
-- Gestion des devises et taux de change (interface, actuellement seedés en SQL brut uniquement).
-- Cycle de vie des périodes de reporting (transitions de statut contrôlées, période clôturée = lecture seule).
+## Prochaines étapes (Phase 3)
+- Conception du plan de comptes minimal (`accounts`) couvrant IS/BS/CF, suffisant pour l'équation bilancielle et la consolidation, sans complexité inutile (règle §8.1).
+- Formulaires de saisie IS/BS/CF par filiale/période (saisie manuelle) + import CSV avec rapport d'erreurs ligne par ligne.
+- `ValidationService` : équation bilancielle (bloquant), champs obligatoires, types, anti-doublon de soumission, alerte non bloquante si variation de revenu > 50 % vs mois précédent.

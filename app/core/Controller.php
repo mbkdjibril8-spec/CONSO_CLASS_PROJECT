@@ -12,6 +12,7 @@ abstract class Controller
 {
     protected function view(string $view, array $data = [], ?string $layout = 'layouts/main'): void
     {
+        $data += ['user' => $this->currentUser()];
         View::render($view, $data, $layout);
     }
 

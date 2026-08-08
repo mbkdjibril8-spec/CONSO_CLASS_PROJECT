@@ -1,11 +1,21 @@
 <?php
-/** Fiche filiale en lecture seule (CRUD complet en Phase 2). */
+/** Fiche filiale. Actions de gestion (modifier/activer-désactiver) réservées à l'administrateur groupe. */
+$isAdmin = $user->roleCode === \App\Models\Role::GROUP_ADMIN;
 ?>
 <div class="page-header">
     <div>
         <h1><?= h($subsidiary->name) ?></h1>
-        <div class="subtitle">Code <?= h($subsidiary->code) ?></div>
+        <div class="subtitle">Code <?= h($subsidiary->code) ?><?= $parent ? ' · Filiale de ' . h($parent->name) : '' ?></div>
     </div>
+    <?php if ($isAdmin): ?>
+        <div>
+            <a href="<?= h(base_url('subsidiaries/' . $subsidiary->id . '/edit')) ?>" class="btn btn-outline">Modifier</a>
+            <form method="post" action="<?= h(base_url('subsidiaries/' . $subsidiary->id . '/toggle-active')) ?>" style="display:inline">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn btn-outline"><?= $subsidiary->isActive ? 'Désactiver' : 'Réactiver' ?></button>
+            </form>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="panel">
@@ -15,6 +25,7 @@
         <tr><td style="width:220px;color:var(--color-text-muted)">Pays</td><td><?= h($subsidiary->country) ?></td></tr>
         <tr><td style="color:var(--color-text-muted)">Zone</td><td><?= h($subsidiary->zone ?? '—') ?></td></tr>
         <tr><td style="color:var(--color-text-muted)">Activité</td><td><?= h($subsidiary->activity ?? '—') ?></td></tr>
+        <tr><td style="color:var(--color-text-muted)">Société mère</td><td><?= $parent ? '<a href="' . h(base_url('subsidiaries/' . $parent->id)) . '">' . h($parent->name) . '</a>' : '— (tête de groupe)' ?></td></tr>
         <tr><td style="color:var(--color-text-muted)">Devise</td><td><?= h($subsidiary->currencyCode) ?></td></tr>
         <tr><td style="color:var(--color-text-muted)">% Détention (ownership)</td><td class="num"><?= number_format($subsidiary->ownershipPct, 2, ',', ' ') ?> %</td></tr>
         <tr><td style="color:var(--color-text-muted)">% Contrôle</td><td class="num"><?= number_format($subsidiary->controlPct, 2, ',', ' ') ?> %</td></tr>
@@ -24,4 +35,4 @@
     </table>
 </div>
 
-<p><a href="<?= h(base_url('dashboard')) ?>">&larr; Retour au tableau de bord</a></p>
+<p><a href="<?= h(base_url($user->isGroupLevel() ? 'subsidiaries' : 'dashboard')) ?>">&larr; Retour</a></p>
