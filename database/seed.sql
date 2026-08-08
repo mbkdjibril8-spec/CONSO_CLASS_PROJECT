@@ -145,3 +145,34 @@ SELECT 'GHS', id, 'closing',
         WHEN 9 THEN 41.00 WHEN 10 THEN 41.30 WHEN 11 THEN 41.60 WHEN 12 THEN 41.90
     END
 FROM reporting_periods WHERE year = 2026;
+
+-- =====================================================================
+-- Phase 3 : plan de comptes (voir docs/CONSOLIDATION_LOGIC.md pour le
+-- détail des formules et de la convention de signe).
+-- =====================================================================
+
+INSERT INTO accounts (code, label, statement_type, section, normal_balance, is_intercompany, display_order) VALUES
+    ('REV', 'Chiffre d''affaires', 'IS', 'exploitation', 'credit', 0, 10),
+    ('IC_REVENUE', 'Produits intercos', 'IS', 'exploitation', 'credit', 1, 20),
+    ('COGS', 'Coût des ventes', 'IS', 'exploitation', 'debit', 0, 30),
+    ('OPEX_PERS', 'Charges de personnel', 'IS', 'exploitation', 'debit', 0, 40),
+    ('OPEX_OTHER', 'Autres charges d''exploitation', 'IS', 'exploitation', 'debit', 0, 50),
+    ('IC_EXPENSE', 'Charges intercos', 'IS', 'exploitation', 'debit', 1, 60),
+    ('DA', 'Dotations aux amortissements', 'IS', 'exploitation', 'debit', 0, 70),
+    ('FIN_INCOME', 'Produits financiers', 'IS', 'financier', 'credit', 0, 80),
+    ('FIN_EXPENSE', 'Charges financières', 'IS', 'financier', 'debit', 0, 90),
+    ('TAX', 'Impôt sur les sociétés', 'IS', 'impot', 'debit', 0, 100),
+
+    ('FIXED_ASSETS', 'Immobilisations nettes', 'BS', 'actif', 'debit', 0, 10),
+    ('RECEIVABLES', 'Créances clients', 'BS', 'actif', 'debit', 0, 20),
+    ('IC_RECEIVABLE', 'Créances intercos', 'BS', 'actif', 'debit', 1, 30),
+    ('CASH', 'Trésorerie et équivalents', 'BS', 'actif', 'debit', 0, 40),
+    ('PAYABLES', 'Dettes fournisseurs', 'BS', 'passif', 'credit', 0, 50),
+    ('IC_PAYABLE', 'Dettes intercos', 'BS', 'passif', 'credit', 1, 60),
+    ('FINANCIAL_DEBT', 'Dettes financières', 'BS', 'passif', 'credit', 0, 70),
+    ('SHARE_CAPITAL', 'Capital social', 'BS', 'capitaux_propres', 'credit', 0, 80),
+    ('RETAINED_EARNINGS', 'Réserves et report à nouveau', 'BS', 'capitaux_propres', 'credit', 0, 90),
+
+    ('CF_OPERATING', 'Flux de trésorerie d''exploitation', 'CF', 'flux', 'debit', 0, 10),
+    ('CF_INVESTING', 'Flux de trésorerie d''investissement', 'CF', 'flux', 'debit', 0, 20),
+    ('CF_FINANCING', 'Flux de trésorerie de financement', 'CF', 'flux', 'debit', 0, 30);

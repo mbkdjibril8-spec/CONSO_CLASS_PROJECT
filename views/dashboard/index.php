@@ -72,16 +72,12 @@
                 · <span class="badge <?= consolidation_method_badge_class($mySubsidiary->consolidationMethod) ?>"><?= h(consolidation_method_label($mySubsidiary->consolidationMethod)) ?></span>
             </p>
             <a href="<?= h(base_url('subsidiaries/' . $mySubsidiary->id)) ?>" class="btn btn-outline">Voir la fiche filiale</a>
+            <a href="<?= h(base_url('financial-data/' . $mySubsidiary->id)) ?>" class="btn btn-primary">Données financières</a>
         </div>
     <?php else: ?>
         <div class="panel">
             <div class="empty-state">Aucune filiale n'est affectée à votre compte. Contactez l'administrateur groupe.</div>
         </div>
     <?php endif; ?>
-
-    <div class="panel">
-        <div class="panel-title">À venir</div>
-        <p class="text-muted">La collecte des données financières et le suivi de vos soumissions seront disponibles dans les prochaines phases du projet.</p>
-    </div>
 
 <?php endif; ?>

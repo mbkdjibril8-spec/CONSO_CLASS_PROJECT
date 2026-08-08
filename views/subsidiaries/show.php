@@ -7,15 +7,18 @@ $isAdmin = $user->roleCode === \App\Models\Role::GROUP_ADMIN;
         <h1><?= h($subsidiary->name) ?></h1>
         <div class="subtitle">Code <?= h($subsidiary->code) ?><?= $parent ? ' · Filiale de ' . h($parent->name) : '' ?></div>
     </div>
-    <?php if ($isAdmin): ?>
-        <div>
+    <div>
+        <?php if ($subsidiary->consolidationMethod !== 'excluded'): ?>
+            <a href="<?= h(base_url('financial-data/' . $subsidiary->id)) ?>" class="btn btn-outline">Données financières</a>
+        <?php endif; ?>
+        <?php if ($isAdmin): ?>
             <a href="<?= h(base_url('subsidiaries/' . $subsidiary->id . '/edit')) ?>" class="btn btn-outline">Modifier</a>
             <form method="post" action="<?= h(base_url('subsidiaries/' . $subsidiary->id . '/toggle-active')) ?>" style="display:inline">
                 <?= csrf_field() ?>
                 <button type="submit" class="btn btn-outline"><?= $subsidiary->isActive ? 'Désactiver' : 'Réactiver' ?></button>
             </form>
-        </div>
-    <?php endif; ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="panel">

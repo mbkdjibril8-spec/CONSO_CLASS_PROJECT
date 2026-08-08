@@ -1,8 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 2 — Structure de groupe + périodes : TERMINÉE ✅**
-Prochaine étape : Phase 3 — Collecte des données + validation.
+**Phase 3 — Collecte des données + validation : TERMINÉE ✅**
+Prochaine étape : Phase 4 — Workflow + intercompany.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -50,6 +50,26 @@ Toutes vérifiées en conditions réelles (HTTP via curl, avec remise à zéro d
 - Taux de change : lecture/écriture pour une période ouverte ✅ ; période clôturée (janvier 2026) → champs en lecture seule côté UI **et** écriture forcée rejetée côté serveur, valeur inchangée.
 - RBAC sur les nouvelles routes : préparateur → 403 sur `/subsidiaries` et `/exchange-rates` (200 sur `/periods`, lecture seule accordée à tous) ; DAF (lecture seule) → 200 sur `/subsidiaries` mais 403 sur `/subsidiaries/create`.
 
+## Phase 3 — Réalisé
+- Plan de comptes minimal (22 comptes IS/BS/CF) — voir `docs/CONSOLIDATION_LOGIC.md` pour le détail des formules, la convention de signe (montants toujours positifs sauf flux CF) et la justification de chaque simplification.
+- `database/seed_financials.php` : générateur déterministe (idempotent, rejouable) des données réelles + budget 2026 pour les 6 filiales opérationnelles, avec une trajectoire cohérente par filiale (Sénégal moteur de profit, Côte d'Ivoire croissance rapide, Mali stable, France faible marge, Maroc en sous-performance budgétaire délibérée, Ghana mise en équivalence). CASH calculé comme valeur d'ajustement garantissant l'équation bilancielle par construction. Solde interco Sénégal/France de décembre pré-positionné pour le scénario de démonstration Phase 4.
+- `ValidationService` : équation bilancielle (bloquant), champs obligatoires + type + signe, anomalie de variation de revenu > 50 % (non bloquant).
+- `CsvImportService` : import `account_code,amount`, lignes valides appliquées immédiatement, lignes invalides rapportées avec numéro de ligne sans bloquer les autres.
+- Écrans : liste des périodes par filiale avec indicateur de complétude, formulaire de saisie IS/BS/CF (lecture seule pour tout rôle sauf Préparateur), import CSV avec rapport détaillé.
+- Règle métier : seul le Préparateur saisit/modifie les données (le Contrôleur valide/rejette en Phase 4 sans ressaisir).
+
+## Bug trouvé et corrigé pendant les tests Phase 3
+`FinancialDataRepository::upsert()` utilisait le même paramètre nommé PDO (`:uid`) à deux endroits de la requête (`created_by`, `updated_by`). Avec `PDO::ATTR_EMULATE_PREPARES => false` (préparation native, configuré dès la Phase 1), MySQL ne supporte pas la réutilisation d'un paramètre nommé — erreur `SQLSTATE[HY093]: Invalid parameter number`, jamais déclenchée avant Phase 3 car aucune requête antérieure ne réutilisait de paramètre. Corrigé en utilisant `:uid_created`/`:uid_updated` distincts. Un audit du reste du code (agent dédié) n'a trouvé aucune autre occurrence. Leçon : tester les flux d'écriture avec des données réelles (pas seulement `php -l`) reste indispensable.
+
+## Vérifications exécutées (DoD Phase 3)
+Toutes vérifiées en conditions réelles (HTTP via curl, y compris upload multipart) :
+- Saisie complète d'un paquet filiale (22 comptes) : équation bilancielle affichée comme équilibrée, résultat net recalculé exact (vérifié à la main pour NOVA-SN janvier : 55 115 000 XOF).
+- Bilan volontairement déséquilibré (CASH modifié) → sauvegarde bloquée avec message explicite (écart chiffré, actif vs passif+capitaux propres+résultat net), aucune écriture en base.
+- Variation de revenu > 50 % vs mois précédent → avertissement nonbloquant affiché, sauvegarde acceptée (202 % de variation testé, message correct).
+- Import CSV : 3 lignes valides importées immédiatement, 1 compte inconnu et 1 montant négatif non autorisé rejetés avec numéro de ligne exact.
+- RBAC : Contrôleur voit la saisie en lecture seule (aucun champ éditable) et reçoit 403 sur toute tentative d'écriture ; Préparateur d'une filiale reçoit 403 sur les données d'une autre filiale.
+- Période clôturée (janvier) : toute tentative d'écriture redirige avec message "période clôturée", sans jamais atteindre la validation.
+
 ## Ajustements UI (hors phase, sur retour utilisateur)
 - Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
 
@@ -62,7 +82,8 @@ Toutes vérifiées en conditions réelles (HTTP via curl, avec remise à zéro d
 ## Cuts / V2 backlog
 (Rien à ce stade — hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.)
 
-## Prochaines étapes (Phase 3)
-- Conception du plan de comptes minimal (`accounts`) couvrant IS/BS/CF, suffisant pour l'équation bilancielle et la consolidation, sans complexité inutile (règle §8.1).
-- Formulaires de saisie IS/BS/CF par filiale/période (saisie manuelle) + import CSV avec rapport d'erreurs ligne par ligne.
-- `ValidationService` : équation bilancielle (bloquant), champs obligatoires, types, anti-doublon de soumission, alerte non bloquante si variation de revenu > 50 % vs mois précédent.
+## Prochaines étapes (Phase 4)
+- `WorkflowService` : transitions Preparer → Submit → Controller → Validate/Reject, historique complet (`workflow_transitions`), anti-doublon de soumission (bloque une resoumission tant que le paquet est déjà soumis/validé).
+- Action "Corriger les données" inline sur paquet rejeté (renvoie vers le formulaire de saisie Phase 3).
+- Déclaration et matching automatique des soldes intercompany (`intercompany_transactions`) — le mismatch Sénégal/France de décembre déjà présent dans `financial_data` (Phase 3) sera déclaré et rapproché ici.
+- Notifications de base (soumission, rejet, mismatch) — centre de notifications complet en Phase 7, mais les lignes doivent être créées dès que l'événement se produit.

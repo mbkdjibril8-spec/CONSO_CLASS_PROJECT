@@ -36,6 +36,7 @@ use App\Core\Session;
 use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\ExchangeRateController;
+use App\Controllers\FinancialDataController;
 use App\Controllers\PeriodController;
 use App\Controllers\SubsidiaryController;
 use App\Middleware\AuthMiddleware;
@@ -56,6 +57,7 @@ $groupRoles = AuthorizationMiddleware::role([
 ]);
 $adminOnly = AuthorizationMiddleware::role([Role::GROUP_ADMIN]);
 $periodManagers = AuthorizationMiddleware::role([Role::GROUP_ADMIN, Role::CONSOLIDATION_MANAGER]);
+$preparerOnly = AuthorizationMiddleware::role([Role::PREPARER]);
 $allRoles = AuthorizationMiddleware::role([
     Role::GROUP_ADMIN,
     Role::PREPARER,
@@ -97,6 +99,14 @@ $router->post('/periods/{id}/transition', [PeriodController::class, 'transition'
 // --- Taux de change --------------------------------------------------------
 $router->get('/exchange-rates', [ExchangeRateController::class, 'index'], [$auth, $groupRoles]);
 $router->post('/exchange-rates', [ExchangeRateController::class, 'store'], [$auth, $adminOnly, $csrf]);
+
+// --- Données financières (IS/BS/CF) ---------------------------------------
+// Consultation ouverte à tous les rôles autorisés sur la filiale ; la
+// saisie (formulaire + import CSV) est réservée au Préparateur.
+$router->get('/financial-data/{subsidiaryId}', [FinancialDataController::class, 'periodsIndex'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
+$router->get('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'show'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
+$router->post('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'save'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
+$router->post('/financial-data/{subsidiaryId}/{periodId}/import', [FinancialDataController::class, 'import'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
 
 $request = new Request();
 $router->dispatch($request);
