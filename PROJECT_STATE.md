@@ -1,8 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 3 — Collecte des données + validation : TERMINÉE ✅**
-Prochaine étape : Phase 4 — Workflow + intercompany.
+**Phase 4 — Workflow + intercompany : TERMINÉE ✅**
+Prochaine étape : Phase 5 — Moteur de consolidation.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -70,6 +70,27 @@ Toutes vérifiées en conditions réelles (HTTP via curl, y compris upload multi
 - RBAC : Contrôleur voit la saisie en lecture seule (aucun champ éditable) et reçoit 403 sur toute tentative d'écriture ; Préparateur d'une filiale reçoit 403 sur les données d'une autre filiale.
 - Période clôturée (janvier) : toute tentative d'écriture redirige avec message "période clôturée", sans jamais atteindre la validation.
 
+## Phase 4 — Réalisé
+- `WorkflowService` : statut d'un paquet filiale/période déduit de la dernière ligne de `workflow_transitions` (pas de colonne dupliquée). Séquence stricte `draft → submitted → validated` ou `submitted → rejected → submitted → ...`. La soumission ré-exécute `ValidationService` (impossible de soumettre incomplet/déséquilibré). Anti-doublon : un paquet déjà `submitted`/`validated` ne peut pas être resoumis.
+- Saisie (formulaire + CSV) verrouillée dès que le statut quitte `draft`/`rejected` — vérifié côté serveur, pas seulement masqué côté UI.
+- Écran de saisie enrichi : bannière de statut, motif de rejet visible, actions Valider/Rejeter (Contrôleur, sur paquet `submitted`), action Soumettre (Préparateur, sur paquet complet et équilibré), historique complet des transitions (utilisateur, date, commentaire).
+- `IntercompanyService` : déclaration à sens unique par filiale, recherche automatique de la contrepartie (receivable↔payable, revenue↔expense), conversion FX (taux de clôture pour les soldes de bilan, taux moyen pour les flux), calcul de l'écart exact, notification des deux contrôleurs + responsable consolidation en cas d'écart. Dividendes traités comme déclaration unilatérale (voir décision ci-dessous).
+- Notifications créées dès l'évènement (soumission, rejet, mismatch) — le centre de notifications (badge, liste) arrive en Phase 7, mais les lignes existent déjà en base.
+- `database/seed_workflow.php` et `database/seed_intercompany.php` : positionnent l'état de départ du scénario de démonstration (5/6 filiales soumises, Maroc en attente ; mismatch Sénégal/France déclaré) en réutilisant les services applicatifs réels (pas de statut écrit à la main).
+
+## Décision : adaptation du motif de rejet du scénario de démonstration
+Le cahier des charges illustre le rejet du Maroc par un "déséquilibre bilanciel". Or la Phase 3 bloque déjà toute sauvegarde déséquilibrée à la source (`ValidationService`), et la Phase 4 revalide à la soumission : un paquet déséquilibré ne peut structurellement jamais atteindre le statut `submitted`. Plutôt que d'affaiblir ce contrôle (régression sur une exigence explicite), le motif de rejet démontré est **l'écart de marge vs budget** — cohérent avec la vraie trame narrative du Maroc (sous-performance budgétaire, cf. Phase 3) et tout aussi représentatif d'un rejet par jugement métier du contrôleur. Le cycle complet (Soumettre → Rejeter avec motif → Corriger → Resoumettre → Valider) a été vérifié en conditions réelles de bout en bout.
+
+## Vérifications exécutées (DoD Phase 4)
+Toutes vérifiées en conditions réelles (HTTP via curl), avec remise à zéro de la base après tests :
+- Cycle complet Maroc : `draft → submitted → rejected → submitted → validated`, chaque transition journalisée dans `workflow_transitions` **et** `audit_logs` avec utilisateur/date/commentaire exacts.
+- Package rejeté : préparateur voit le motif exact + formulaire de nouveau éditable ; notification créée pour le préparateur.
+- Anti-doublon : tentative de resoumission d'un paquet déjà validé → bloquée avec message explicite, aucune nouvelle transition créée.
+- Mismatch intercompany Sénégal (100M XOF) / France (~95M XOF) : écart de 5 000 000 XOF calculé automatiquement et identique des deux côtés ; notifications envoyées aux deux contrôleurs + responsable consolidation.
+- Isolation : préparateur Mali ne voit aucune déclaration intercompany impliquant Sénégal/France ; responsable consolidation (rôle groupe) voit toutes les déclarations de la période.
+- 6/6 filiales validées pour décembre 2026 — prêt pour le run de consolidation (Phase 5).
+- Bug de tolérance d'arrondi corrigé pendant les tests : `ValidationService` comparait à 0,01 XOF près, trop strict face à l'arrondi indépendant de 9 comptes stockés en `DECIMAL(18,2)` (écarts résiduels observés jusqu'à 0,01 XOF sur des montants de centaines de millions). Tolérance portée à 1 XOF, documentée dans `ValidationService`.
+
 ## Ajustements UI (hors phase, sur retour utilisateur)
 - Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
 
@@ -82,8 +103,9 @@ Toutes vérifiées en conditions réelles (HTTP via curl, y compris upload multi
 ## Cuts / V2 backlog
 (Rien à ce stade — hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.)
 
-## Prochaines étapes (Phase 4)
-- `WorkflowService` : transitions Preparer → Submit → Controller → Validate/Reject, historique complet (`workflow_transitions`), anti-doublon de soumission (bloque une resoumission tant que le paquet est déjà soumis/validé).
-- Action "Corriger les données" inline sur paquet rejeté (renvoie vers le formulaire de saisie Phase 3).
-- Déclaration et matching automatique des soldes intercompany (`intercompany_transactions`) — le mismatch Sénégal/France de décembre déjà présent dans `financial_data` (Phase 3) sera déclaré et rapproché ici.
-- Notifications de base (soumission, rejet, mismatch) — centre de notifications complet en Phase 7, mais les lignes doivent être créées dès que l'événement se produit.
+## Prochaines étapes (Phase 5)
+- `CurrencyConversionService` (taux moyen pour l'IS, taux de clôture pour le bilan) et `ConsolidationService` (périmètre → conversion → agrégation → éliminations intercos → élimination des dividendes → intérêts minoritaires).
+- Traitement spécifique NOVA Ghana (mise en équivalence) vs les 5 autres filiales (intégration globale).
+- `consolidation_runs` / `consolidation_run_steps` : run traçable avec journal de chaque étape.
+- Ajustements de consolidation manuels (`consolidation_adjustments`), pleinement auditables.
+- Utiliser les 6 paquets déjà validés en décembre 2026 (Phase 4) comme jeu de données du premier run réel.

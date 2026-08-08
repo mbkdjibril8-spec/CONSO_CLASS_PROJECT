@@ -107,6 +107,53 @@ l'activité avec les tiers.
    (Phase 4), pas au niveau de la saisie (upsert idempotent par
    filiale/période/compte).
 
+## Workflow (Phase 4)
+Le statut d'un paquet filiale/période (`draft`, `submitted`, `rejected`,
+`validated`) n'est **pas stocké** dans une colonne dédiée : il est déduit
+de la dernière ligne de `workflow_transitions` pour ce couple
+filiale/période (`draft` si aucune ligne n'existe encore). Source unique
+de vérité, cohérent avec l'exigence d'audit "chaque transition
+enregistrée". Séquence autorisée :
+```
+draft --(Soumettre, Préparateur)--> submitted
+submitted --(Valider, Contrôleur)--> validated
+submitted --(Rejeter + motif, Contrôleur)--> rejected
+rejected --(Soumettre à nouveau, Préparateur)--> submitted
+```
+La saisie (formulaire + import CSV) n'est modifiable que si le statut est
+`draft` ou `rejected` **et** que la période n'est pas clôturée — vérifié
+côté serveur (`WorkflowService::isEditable`), pas seulement masqué côté UI.
+La soumission ré-exécute `ValidationService` sur les données déjà
+enregistrées : impossible de soumettre un paquet incomplet ou déséquilibré.
+
+## Intercompany (Phase 4)
+Chaque filiale déclare **son propre côté** d'une opération intercompany
+(`intercompany_transactions`, un enregistrement par déclarant). Le
+rapprochement automatique cherche la déclaration miroir de la
+contrepartie pour la même période :
+
+| Type déclaré | Type miroir attendu |
+|---|---|
+| receivable (créance) | payable (dette) |
+| payable (dette) | receivable (créance) |
+| revenue (produit) | expense (charge) |
+| expense (charge) | revenue (produit) |
+| dividend | — (voir ci-dessous) |
+
+Conversion en XOF : **taux de clôture** pour receivable/payable (soldes de
+bilan), **taux moyen** pour revenue/expense/dividend (flux de période).
+Si les deux montants convertis diffèrent de moins de 0,01 XOF → `matched`,
+sinon → `mismatch` avec l'écart exact stocké sur les deux lignes
+(`difference_amount`) et notification aux contrôleurs des deux filiales
++ au responsable consolidation.
+
+**Simplification dividendes** : NOVA Holding ne soumettant pas de paquet
+financier propre (décision Phase 1), il n'existe pas de "contrepartie"
+qui déclarerait la réception d'un dividende intra-groupe. Une déclaration
+`dividend` est donc **à sens unique** (déclarée par la filiale payante) et
+marquée `matched` dès la saisie, sans recherche de contrepartie. Elle sert
+uniquement de donnée source pour l'élimination des dividendes en Phase 5.
+
 ## Import CSV
 Format attendu : 2 colonnes `account_code,amount`, un fichier par couple
 filiale/période couvrant tous les comptes (IS+BS+CF mélangés, le compte

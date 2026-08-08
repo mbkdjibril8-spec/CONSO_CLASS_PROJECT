@@ -1,6 +1,7 @@
 <?php
 /**
- * Formulaire de saisie IS/BS/CF pour une filiale/période.
+ * Formulaire de saisie IS/BS/CF pour une filiale/période, avec workflow
+ * de soumission/validation/rejet intégré (Phase 4).
  * $balance : résultat de ValidationService sur les données actuellement en
  * base (calculé uniquement si les 22 comptes sont déjà renseignés), ou null.
  * $errors : erreurs de validation d'une soumission qui vient d'échouer.
@@ -35,10 +36,21 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
         <h1><?= h($subsidiary->name) ?> — <?= h($period->label) ?></h1>
         <div class="subtitle">
             <span class="badge <?= $period->isClosed() ? 'badge-neutral' : 'badge-info' ?>"><?= h(period_status_label($period->status)) ?></span>
-            <?= !$canEdit ? '<span class="badge badge-neutral">Lecture seule</span>' : '' ?>
+            <span class="badge <?= workflow_status_badge_class($workflowStatus) ?>"><?= h(workflow_status_label($workflowStatus)) ?></span>
         </div>
     </div>
 </div>
+
+<?php if ($workflowStatus === 'rejected' && $rejectionReason): ?>
+    <div class="alert alert-error">
+        <strong>Paquet rejeté par le contrôleur.</strong> Motif : <?= h($rejectionReason) ?>
+        <?php if ($canEdit): ?><div style="margin-top:4px">Corrigez les données ci-dessous puis soumettez à nouveau.</div><?php endif; ?>
+    </div>
+<?php elseif ($workflowStatus === 'submitted'): ?>
+    <div class="alert alert-info">Paquet soumis, en attente de validation par le contrôleur de filiale.</div>
+<?php elseif ($workflowStatus === 'validated'): ?>
+    <div class="alert alert-success">Paquet validé. Il sera repris par le prochain run de consolidation.</div>
+<?php endif; ?>
 
 <?php if (!empty($errors)): ?>
     <div class="alert alert-error">
@@ -56,7 +68,7 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
     <?php foreach ($balance['warnings'] as $warning): ?>
         <div class="alert alert-warning"><?= h($warning) ?></div>
     <?php endforeach; ?>
-<?php else: ?>
+<?php elseif ($canEdit): ?>
     <div class="alert alert-info">Saisie incomplète : le contrôle d'équilibre du bilan s'affichera une fois tous les comptes renseignés.</div>
 <?php endif; ?>
 
@@ -70,6 +82,21 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
                 <?php endforeach; ?>
             </ul>
         <?php endif; ?>
+    </div>
+<?php endif; ?>
+
+<?php if ($canReview): ?>
+    <div class="panel" style="border-color:var(--color-info)">
+        <div class="panel-title">Revue du contrôleur</div>
+        <form method="post" action="<?= h(base_url('financial-data/' . $subsidiary->id . '/' . $period->id . '/validate')) ?>" style="display:inline">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-primary">Valider le paquet</button>
+        </form>
+        <form method="post" action="<?= h(base_url('financial-data/' . $subsidiary->id . '/' . $period->id . '/reject')) ?>" style="display:inline-block;margin-left:8px">
+            <?= csrf_field() ?>
+            <input type="text" name="reason" placeholder="Motif du rejet (obligatoire)" required style="padding:7px 10px;border:1px solid var(--color-border-strong);border-radius:var(--radius);width:260px">
+            <button type="submit" class="btn btn-outline">Rejeter</button>
+        </form>
     </div>
 <?php endif; ?>
 
@@ -89,8 +116,8 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
 
     <?php if ($canEdit): ?>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
-        <a href="<?= h(base_url('financial-data/' . $subsidiary->id)) ?>" class="btn btn-outline">Retour aux périodes</a>
     <?php endif; ?>
+    <a href="<?= h(base_url('financial-data/' . $subsidiary->id)) ?>" class="btn btn-outline">Retour aux périodes</a>
 </form>
 
 <?php if ($canEdit): ?>
@@ -108,5 +135,40 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
             </div>
             <button type="submit" class="btn btn-outline">Importer</button>
         </form>
+    </div>
+<?php endif; ?>
+
+<?php if ($canSubmit): ?>
+    <div class="panel" style="max-width:520px">
+        <div class="panel-title">Soumission</div>
+        <p class="text-muted" style="font-size:.83rem">Une fois soumis, le paquet n'est plus modifiable tant que le contrôleur ne l'a pas rejeté.</p>
+        <form method="post" action="<?= h(base_url('financial-data/' . $subsidiary->id . '/' . $period->id . '/submit')) ?>">
+            <?= csrf_field() ?>
+            <button type="submit" class="btn btn-primary">Soumettre pour validation</button>
+        </form>
+    </div>
+<?php endif; ?>
+
+<?php if (!empty($history)): ?>
+    <div class="panel">
+        <div class="panel-title">Historique du workflow</div>
+        <table>
+            <thead>
+            <tr><th>Date</th><th>Utilisateur</th><th>Transition</th><th>Commentaire</th></tr>
+            </thead>
+            <tbody>
+            <?php foreach ($history as $entry): ?>
+                <tr>
+                    <td><?= h(format_date($entry['created_at'])) ?></td>
+                    <td><?= h($entry['user_name']) ?></td>
+                    <td>
+                        <?= $entry['from_status'] ? h(workflow_status_label($entry['from_status'])) . ' &rarr; ' : '' ?>
+                        <span class="badge <?= workflow_status_badge_class($entry['to_status']) ?>"><?= h(workflow_status_label($entry['to_status'])) ?></span>
+                    </td>
+                    <td><?= h($entry['comment'] ?? '—') ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
     </div>
 <?php endif; ?>

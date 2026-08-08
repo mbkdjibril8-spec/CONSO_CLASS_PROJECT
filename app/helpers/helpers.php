@@ -116,6 +116,55 @@ function consolidation_method_badge_class(string $method): string
     return $classes[$method] ?? 'badge-neutral';
 }
 
+/** Libellés français des statuts de workflow d'un paquet filiale/période. */
+function workflow_status_label(string $status): string
+{
+    $labels = [
+        'draft'     => 'Brouillon',
+        'submitted' => 'Soumis',
+        'rejected'  => 'Rejeté',
+        'validated' => 'Validé',
+    ];
+    return $labels[$status] ?? $status;
+}
+
+function workflow_status_badge_class(string $status): string
+{
+    $classes = [
+        'draft'     => 'badge-neutral',
+        'submitted' => 'badge-info',
+        'rejected'  => 'badge-negative',
+        'validated' => 'badge-positive',
+    ];
+    return $classes[$status] ?? 'badge-neutral';
+}
+
+/** Libellés français des types de déclaration intercompany. */
+function intercompany_type_label(string $type): string
+{
+    $labels = [
+        'receivable' => 'Créance',
+        'payable' => 'Dette',
+        'revenue' => 'Produit',
+        'expense' => 'Charge',
+        'dividend' => 'Dividende',
+    ];
+    return $labels[$type] ?? $type;
+}
+
+/** Libellés français des statuts de rapprochement intercompany. */
+function match_status_label(string $status): string
+{
+    $labels = ['pending' => 'En attente', 'matched' => 'Rapproché', 'mismatch' => 'Écart'];
+    return $labels[$status] ?? $status;
+}
+
+function match_status_badge_class(string $status): string
+{
+    $classes = ['pending' => 'badge-warning', 'matched' => 'badge-positive', 'mismatch' => 'badge-negative'];
+    return $classes[$status] ?? 'badge-neutral';
+}
+
 /** Libellés français des rôles applicatifs. */
 function role_label(string $code): string
 {

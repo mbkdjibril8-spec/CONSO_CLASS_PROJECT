@@ -49,6 +49,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
             <?php elseif ($user->subsidiaryId): ?>
                 <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>
             <?php endif; ?>
+            <?php $navLink('intercompany', 'Intercompany'); ?>
             <?php $navLink('periods', 'Périodes'); ?>
         </nav>
     </aside>

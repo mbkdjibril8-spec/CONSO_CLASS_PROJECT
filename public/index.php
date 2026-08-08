@@ -37,8 +37,10 @@ use App\Controllers\AuthController;
 use App\Controllers\DashboardController;
 use App\Controllers\ExchangeRateController;
 use App\Controllers\FinancialDataController;
+use App\Controllers\IntercompanyController;
 use App\Controllers\PeriodController;
 use App\Controllers\SubsidiaryController;
+use App\Controllers\WorkflowController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\AuthorizationMiddleware;
 use App\Middleware\CsrfMiddleware;
@@ -58,6 +60,7 @@ $groupRoles = AuthorizationMiddleware::role([
 $adminOnly = AuthorizationMiddleware::role([Role::GROUP_ADMIN]);
 $periodManagers = AuthorizationMiddleware::role([Role::GROUP_ADMIN, Role::CONSOLIDATION_MANAGER]);
 $preparerOnly = AuthorizationMiddleware::role([Role::PREPARER]);
+$controllerOnly = AuthorizationMiddleware::role([Role::SUBSIDIARY_CONTROLLER]);
 $allRoles = AuthorizationMiddleware::role([
     Role::GROUP_ADMIN,
     Role::PREPARER,
@@ -107,6 +110,16 @@ $router->get('/financial-data/{subsidiaryId}', [FinancialDataController::class, 
 $router->get('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'show'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
 $router->post('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'save'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
 $router->post('/financial-data/{subsidiaryId}/{periodId}/import', [FinancialDataController::class, 'import'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
+
+// --- Workflow (soumission / validation / rejet) ---------------------------
+$router->post('/financial-data/{subsidiaryId}/{periodId}/submit', [WorkflowController::class, 'submit'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
+$router->post('/financial-data/{subsidiaryId}/{periodId}/validate', [WorkflowController::class, 'validatePackage'], [$auth, $controllerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
+$router->post('/financial-data/{subsidiaryId}/{periodId}/reject', [WorkflowController::class, 'reject'], [$auth, $controllerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
+
+// --- Intercompany ------------------------------------------------------------
+$router->get('/intercompany', [IntercompanyController::class, 'index'], [$auth, $allRoles]);
+$router->get('/intercompany/create', [IntercompanyController::class, 'createForm'], [$auth, $preparerOnly]);
+$router->post('/intercompany', [IntercompanyController::class, 'store'], [$auth, $preparerOnly, $csrf]);
 
 $request = new Request();
 $router->dispatch($request);

@@ -17,6 +17,12 @@ class ValidationService
     private const BS_ASSET_ACCOUNTS = ['FIXED_ASSETS', 'RECEIVABLES', 'IC_RECEIVABLE', 'CASH'];
     private const BS_LIAB_EQUITY_ACCOUNTS = ['PAYABLES', 'IC_PAYABLE', 'FINANCIAL_DEBT', 'SHARE_CAPITAL', 'RETAINED_EARNINGS'];
     private const ANOMALY_THRESHOLD = 0.50;
+    // Tolérance d'arrondi : les montants sont stockés en DECIMAL(18,2) ;
+    // l'arrondi indépendant de chacun des 9 comptes du bilan peut produire
+    // un écart résiduel de quelques centimes sans traduire une vraie
+    // erreur de saisie. 1 unité de devise absorbe ce bruit sans masquer
+    // un déséquilibre réel (toujours de plusieurs ordres de grandeur au-dessus).
+    private const BALANCE_TOLERANCE = 1.00;
 
     /**
      * @param Account[] $accounts tous les comptes actifs (indexés par code)
@@ -62,7 +68,7 @@ class ValidationService
         $liabEquity = $this->sum($parsed, self::BS_LIAB_EQUITY_ACCOUNTS) + $netIncome;
         $diff = round($assets - $liabEquity, 2);
 
-        if (abs($diff) >= 0.01) {
+        if (abs($diff) >= self::BALANCE_TOLERANCE) {
             $sens = $diff > 0 ? 'l\'actif excède le passif + capitaux propres' : 'le passif + capitaux propres excède l\'actif';
             $errors['_balance'] = sprintf(
                 'Le bilan n\'est pas équilibré : %s de %s. Actif = %s, Passif + Capitaux propres + Résultat net = %s.',
