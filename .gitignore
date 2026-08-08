@@ -1,0 +1,19 @@
+# Configuration locale (contient les identifiants de connexion à la base)
+/config/config.php
+
+# Stockage local (logs, exports générés)
+/storage/logs/*
+!/storage/logs/.gitkeep
+/storage/exports/*
+!/storage/exports/.gitkeep
+
+# Environnement
+.env
+.DS_Store
+Thumbs.db
+
+# Dépendances (si Composer est utilisé pour les tests dev)
+/vendor/
+
+# Livrable final
+/GROUPFIN.zip
