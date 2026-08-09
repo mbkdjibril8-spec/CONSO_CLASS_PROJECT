@@ -86,21 +86,26 @@ INSERT INTO users (name, email, password_hash, role_id, subsidiary_id) VALUES
 
 -- ---------------------------------------------------------------------
 -- Périodes de reporting — exercice 2026
--- Janvier à novembre : clôturées (historique). Décembre : en cours
--- (période active du scénario de démonstration, voir cahier des charges §9).
+-- Toutes ouvertes (in_progress) : sur demande utilisateur, aucun mois
+-- n'est verrouillé par défaut, pour permettre de tester librement le
+-- cycle de workflow (saisie -> soumission -> validation/rejet) sur
+-- n'importe quel mois, pas seulement décembre (scénario de démo §9).
+-- Le cycle de vie complet (verrouillage après clôture, Phase 2) reste
+-- utilisable : un admin peut toujours faire avancer un mois jusqu'à
+-- "closed" depuis l'écran Périodes pour re-tester ce comportement.
 -- ---------------------------------------------------------------------
 INSERT INTO reporting_periods (year, month, label, status) VALUES
-    (2026, 1, '2026-01', 'closed'),
-    (2026, 2, '2026-02', 'closed'),
-    (2026, 3, '2026-03', 'closed'),
-    (2026, 4, '2026-04', 'closed'),
-    (2026, 5, '2026-05', 'closed'),
-    (2026, 6, '2026-06', 'closed'),
-    (2026, 7, '2026-07', 'closed'),
-    (2026, 8, '2026-08', 'closed'),
-    (2026, 9, '2026-09', 'closed'),
-    (2026, 10, '2026-10', 'closed'),
-    (2026, 11, '2026-11', 'closed'),
+    (2026, 1, '2026-01', 'in_progress'),
+    (2026, 2, '2026-02', 'in_progress'),
+    (2026, 3, '2026-03', 'in_progress'),
+    (2026, 4, '2026-04', 'in_progress'),
+    (2026, 5, '2026-05', 'in_progress'),
+    (2026, 6, '2026-06', 'in_progress'),
+    (2026, 7, '2026-07', 'in_progress'),
+    (2026, 8, '2026-08', 'in_progress'),
+    (2026, 9, '2026-09', 'in_progress'),
+    (2026, 10, '2026-10', 'in_progress'),
+    (2026, 11, '2026-11', 'in_progress'),
     (2026, 12, '2026-12', 'in_progress');
 
 -- ---------------------------------------------------------------------

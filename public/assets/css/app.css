@@ -17,13 +17,15 @@
   --color-text-muted: #6b6156;
   --color-text-faint: #948a7b;
 
-  /* Structure (charbon chaud, plus sobre qu'un graphite froid) */
-  --color-graphite: #2a231d;
-  --color-graphite-2: #382e26;
+  /* Structure — bleu marine profond (réseau/connexions, cf. visuel de référence) */
+  --color-graphite: #121e2c;
+  --color-graphite-2: #1b2c40;
+  --color-network: #ff9142;
+  --color-network-dim: #2a7f8f;
 
-  /* Marque — orange + vert (identité GROUPFIN) */
-  --color-primary: #b8501c;
-  --color-primary-hover: #9c4116;
+  /* Marque — orange (accent) + vert (identité GROUPFIN) */
+  --color-primary: #c15a1e;
+  --color-primary-hover: #a34a17;
   --color-primary-bg: #fbeadf;
   --color-secondary: #1f7a4d;
   --color-secondary-bg: #e6f4ec;
@@ -373,8 +375,10 @@ td.num, th.num { text-align: right; }
   padding: 52px 58px;
   color: #eef0f2;
   background:
-    radial-gradient(circle at 15% 8%, rgba(184,80,28,.16), transparent 42%),
-    linear-gradient(165deg, #2e2721 0%, #211b16 62%, #17130f 100%);
+    radial-gradient(circle at 80% 12%, rgba(42,127,143,.30), transparent 38%),
+    radial-gradient(circle at 12% 85%, rgba(193,90,30,.22), transparent 40%),
+    radial-gradient(circle at 15% 8%, rgba(255,145,66,.14), transparent 42%),
+    linear-gradient(165deg, #14212f 0%, #0d1620 62%, #090f16 100%);
   overflow: hidden;
 }
 .auth-brand-side::before {
@@ -382,10 +386,19 @@ td.num, th.num { text-align: right; }
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+    linear-gradient(rgba(255,255,255,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.04) 1px, transparent 1px);
   background-size: 42px 42px;
   mask-image: linear-gradient(180deg, transparent, rgba(0,0,0,.9) 35%, rgba(0,0,0,.9) 75%, transparent);
+  pointer-events: none;
+}
+
+.auth-network {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: .85;
   pointer-events: none;
 }
 
