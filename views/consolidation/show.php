@@ -143,6 +143,25 @@ $val = fn (string $code) => $lineItems[$code] ?? 0.0;
 </div>
 <?php endif; ?>
 
+<details style="margin-bottom:20px">
+    <summary class="btn btn-outline" style="display:inline-block;cursor:pointer">Afficher au format normalisé OHADA/SYCEBNL</summary>
+    <div class="panel" style="margin-top:12px">
+        <div class="ohada-header">Compte de résultat consolidé au 31 <?= h($run['period_label']) ?></div>
+        <?= render_ohada_income_statement($lineItems) ?>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <div class="panel" style="flex:1 1 460px">
+            <div class="ohada-header">Bilan consolidé — Actif</div>
+            <?= render_ohada_balance_sheet_actif($lineItems, $summary['netIncomeFullAgg']) ?>
+        </div>
+        <div class="panel" style="flex:1 1 460px">
+            <div class="ohada-header">Bilan consolidé — Passif</div>
+            <?= render_ohada_balance_sheet_passif($lineItems, $summary['netIncomeFullAgg']) ?>
+        </div>
+    </div>
+    <p class="text-faint">Présentation groupe (avant répartition part du groupe / minoritaires). Le modèle OHADA individuel n'a pas de ligne dédiée à la quote-part des sociétés mises en équivalence : le résultat net ci-dessus (XI/CJ) est donc hors quote-part Ghana (<?= format_amount($summary['eqIncome']) ?> XOF, présente en revanche dans les titres mis en équivalence à l'actif) — voir le tableau détaillé plus haut pour le résultat net consolidé total.</p>
+</details>
+
 <?php endif; ?>
 
 <p><a href="<?= h(base_url('consolidation')) ?>">&larr; Retour aux runs</a></p>

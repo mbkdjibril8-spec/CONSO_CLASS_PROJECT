@@ -2,6 +2,7 @@
 /** Consultation des déclarations intercompany (rapprochement automatique). */
 $isPreparer = $user->roleCode === \App\Models\Role::PREPARER;
 ?>
+<div id="ajax-content">
 <div class="page-header">
     <div>
         <h1>Intercompany</h1>
@@ -13,7 +14,7 @@ $isPreparer = $user->roleCode === \App\Models\Role::PREPARER;
 </div>
 
 <div class="panel" style="max-width:280px">
-    <form method="get" action="<?= h(base_url('intercompany')) ?>">
+    <form method="get" action="<?= h(base_url('intercompany')) ?>" data-ajax-filter>
         <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
@@ -56,4 +57,5 @@ $isPreparer = $user->roleCode === \App\Models\Role::PREPARER;
         </tbody>
     </table>
     <?php endif; ?>
+</div>
 </div>

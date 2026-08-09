@@ -34,7 +34,7 @@ class ExchangeRateController extends Controller
             'period' => $period,
             'currencies' => (new CurrencyRepository())->foreign(),
             'rates' => $period ? (new ExchangeRateRepository())->forPeriod($period->id) : [],
-        ]);
+        ], $request->isAjax() ? null : 'layouts/main');
     }
 
     public function store(Request $request): void

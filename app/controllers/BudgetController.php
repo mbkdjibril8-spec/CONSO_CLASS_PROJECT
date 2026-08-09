@@ -49,6 +49,6 @@ class BudgetController extends Controller
             'subsidiaryFilter' => $subsidiaryFilter,
             'detail' => $detail,
             'accounts' => (new AccountRepository())->allByCode(),
-        ]);
+        ], $request->isAjax() ? null : 'layouts/main');
     }
 }

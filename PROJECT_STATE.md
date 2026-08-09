@@ -2,6 +2,7 @@
 
 ## Phase courante
 **Phase 6 — Budget vs Actual + dashboards : TERMINÉE ✅**
+**Ajustement UX/OHADA post-Phase 6 : TERMINÉ ✅** (voir section dédiée ci-dessous)
 Prochaine étape : Phase 7 — Notifications, audit, exports.
 
 ## Installation
@@ -132,6 +133,13 @@ Toutes vérifiées en conditions réelles (HTTP via curl) :
 
 ## Ajustements UI (hors phase, sur retour utilisateur)
 - Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
+
+## Ajustement UX/OHADA post-Phase 6 (retour utilisateur détaillé)
+- **Palette orange + vert** : nouvelle identité de marque (`--color-primary` orange brûlé, `--color-secondary` vert) appliquée aux boutons, liens, navigation active, focus, écran de connexion — structure graphite réchauffée (tons chauds au lieu de gris froids) pour rester cohérente. Couleurs sémantiques (positif/négatif/alerte/info) conservées distinctes de la marque.
+- **Filtres dynamiques (AJAX)** : les formulaires de filtre (dashboard, Budget vs Actual, taux de change, intercompany, ajustements) ne rechargent plus toute la page — `Request::isAjax()` détecte l'en-tête `X-Requested-With`, le contrôleur rend la vue sans layout, et une couche JS générique (`views/layouts/main.php`) échange le fragment `#ajax-content` en `fetch()` avec repli complet si JS est désactivé et gestion correcte du bouton retour (`history.pushState`/`popstate`).
+- **États financiers au format OHADA/SYCEBNL** : nouvel écran filiale (`/financial-data/{id}/{periodId}/statement`) et section dépliable sur le run de consolidation, présentant compte de résultat et bilan avec codes REF et soldes intermédiaires de gestion — voir `docs/CONSOLIDATION_LOGIC.md` pour le mapping complet et un bug d'équilibrage corrigé pendant l'implémentation (écart de conversion / titres mis en équivalence).
+- Transitions/micro-interactions ajoutées (boutons, liens, lignes de tableau, champs) pour une sensation plus réactive, cohérent avec la demande explicite "plateforme dynamique, pas statique".
+- Reporté (hors scope de cet ajustement, à traiter plus tard si besoin) : plus de visuels sur les écrans hors dashboard (fiche filiale, workflow), relooking approfondi au-delà de la palette.
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

@@ -2,6 +2,7 @@
 /** Ajustements de consolidation manuels (débit/crédit), pleinement auditables. */
 $canCreate = in_array($user->roleCode, [\App\Models\Role::GROUP_ADMIN, \App\Models\Role::CONSOLIDATION_MANAGER], true);
 ?>
+<div id="ajax-content">
 <div class="page-header">
     <div>
         <h1>Ajustements de consolidation</h1>
@@ -10,7 +11,7 @@ $canCreate = in_array($user->roleCode, [\App\Models\Role::GROUP_ADMIN, \App\Mode
 </div>
 
 <div class="panel" style="max-width:280px">
-    <form method="get" action="<?= h(base_url('consolidation/adjustments')) ?>">
+    <form method="get" action="<?= h(base_url('consolidation/adjustments')) ?>" data-ajax-filter>
         <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
@@ -96,4 +97,5 @@ $canCreate = in_array($user->roleCode, [\App\Models\Role::GROUP_ADMIN, \App\Mode
         </tbody>
     </table>
     <?php endif; ?>
+</div>
 </div>

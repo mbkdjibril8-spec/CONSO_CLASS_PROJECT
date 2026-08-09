@@ -3,6 +3,7 @@
 $isAdmin = $user->roleCode === \App\Models\Role::GROUP_ADMIN;
 $readOnly = !$period || $period->isClosed() || !$isAdmin;
 ?>
+<div id="ajax-content">
 <div class="page-header">
     <div>
         <h1>Taux de change</h1>
@@ -11,7 +12,7 @@ $readOnly = !$period || $period->isClosed() || !$isAdmin;
 </div>
 
 <div class="panel" style="max-width:280px">
-    <form method="get" action="<?= h(base_url('exchange-rates')) ?>">
+    <form method="get" action="<?= h(base_url('exchange-rates')) ?>" data-ajax-filter>
         <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
@@ -68,3 +69,4 @@ $readOnly = !$period || $period->isClosed() || !$isAdmin;
     </div>
 
 <?php endif; ?>
+</div>

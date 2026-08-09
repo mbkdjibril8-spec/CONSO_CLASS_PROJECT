@@ -49,7 +49,7 @@ class IntercompanyController extends Controller
             'periods' => $periods,
             'period' => $period,
             'rows' => $rows,
-        ]);
+        ], $request->isAjax() ? null : 'layouts/main');
     }
 
     public function createForm(Request $request): void

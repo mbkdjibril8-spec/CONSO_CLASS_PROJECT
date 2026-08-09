@@ -39,6 +39,7 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
             <span class="badge <?= workflow_status_badge_class($workflowStatus) ?>"><?= h(workflow_status_label($workflowStatus)) ?></span>
         </div>
     </div>
+    <a href="<?= h(base_url('financial-data/' . $subsidiary->id . '/' . $period->id . '/statement')) ?>" class="btn btn-outline">Voir l'état financier &rarr;</a>
 </div>
 
 <?php if ($workflowStatus === 'rejected' && $rejectionReason): ?>

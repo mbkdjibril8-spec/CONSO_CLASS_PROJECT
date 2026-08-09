@@ -21,6 +21,7 @@ $renderVarianceCell = function (array $row) {
     echo '<td class="num"><span class="kpi-delta ' . $cls . '">' . $arrow . ' ' . number_format(abs($row['variancePct']), 1, ',', ' ') . '%</span></td>';
 };
 ?>
+<div id="ajax-content">
 <div class="page-header">
     <div>
         <h1>Budget vs Actual</h1>
@@ -29,7 +30,7 @@ $renderVarianceCell = function (array $row) {
 </div>
 
 <div class="panel">
-    <form method="get" action="<?= h(base_url('budgets')) ?>" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+    <form method="get" action="<?= h(base_url('budgets')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="margin:0">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
@@ -88,3 +89,4 @@ $renderVarianceCell = function (array $row) {
         <p class="text-faint" style="margin-top:10px">Écart % : favorable (vert) si le réel dépasse le budget pour un produit, ou lui est inférieur pour une charge.</p>
     </div>
 <?php endif; ?>
+</div>

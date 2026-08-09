@@ -40,7 +40,7 @@ class DashboardController extends Controller
         ];
 
         if (!$period) {
-            $this->view('dashboard/index', $data);
+            $this->view('dashboard/index', $data, $request->isAjax() ? null : 'layouts/main');
             return;
         }
 
@@ -81,6 +81,6 @@ class DashboardController extends Controller
             }
         }
 
-        $this->view('dashboard/index', $data);
+        $this->view('dashboard/index', $data, $request->isAjax() ? null : 'layouts/main');
     }
 }

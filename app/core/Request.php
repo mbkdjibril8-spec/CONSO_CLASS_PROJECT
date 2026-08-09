@@ -95,4 +95,10 @@ class Request
     {
         return $_SERVER['REMOTE_ADDR'] ?? 'unknown';
     }
+
+    /** Requête envoyée par le JS de la couche "filtres dynamiques" (fetch, pas de rechargement complet). */
+    public function isAjax(): bool
+    {
+        return ($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '') === 'XMLHttpRequest';
+    }
 }

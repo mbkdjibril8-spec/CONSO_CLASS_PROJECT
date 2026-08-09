@@ -21,6 +21,7 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
     <?php
 };
 ?>
+<div id="ajax-content">
 <div class="page-header">
     <div>
         <h1>Tableau de bord</h1>
@@ -30,11 +31,10 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
 
 <?php if (!$period): ?>
     <div class="panel"><div class="empty-state">Aucune période disponible.</div></div>
-    <?php return; ?>
-<?php endif; ?>
+<?php else: ?>
 
 <div class="panel">
-    <form method="get" action="<?= h(base_url('dashboard')) ?>" style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
+    <form method="get" action="<?= h(base_url('dashboard')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="margin:0">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
@@ -174,3 +174,6 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
     <?php endif; ?>
 
 <?php endif; ?>
+
+<?php endif; ?>
+</div>

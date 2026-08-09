@@ -117,6 +117,37 @@ class FinancialDataController extends Controller
         ]);
     }
 
+    /** État financier au format normalisé OHADA (lecture seule, présentation uniquement — voir docs/CONSOLIDATION_LOGIC.md). */
+    public function statement(Request $request, string $subsidiaryId, string $periodId): void
+    {
+        $subsidiary = $this->subsidiaries->findById((int) $subsidiaryId);
+        $period = $this->periods->findById((int) $periodId);
+        if (!$subsidiary || !$period) {
+            http_response_code(404);
+            $this->view('errors/404', ['title' => 'Introuvable']);
+            return;
+        }
+
+        $accountsByCode = $this->accounts->enterableByCode();
+        $stored = $this->financialData->forSubsidiaryPeriod($subsidiary->id, $period->id);
+        $amounts = [];
+        foreach ($accountsByCode as $code => $account) {
+            if (array_key_exists($account->id, $stored)) {
+                $amounts[$code] = $stored[$account->id];
+            }
+        }
+        $netIncome = (new ValidationService())->computeNetIncome($amounts);
+
+        $this->view('reporting/statement', [
+            'title' => 'État financier — ' . $subsidiary->name . ' — ' . $period->label,
+            'subsidiary' => $subsidiary,
+            'period' => $period,
+            'amounts' => $amounts,
+            'netIncome' => $netIncome,
+            'complete' => count($amounts) === count($accountsByCode),
+        ]);
+    }
+
     public function save(Request $request, string $subsidiaryId, string $periodId): void
     {
         $subsidiary = $this->subsidiaries->findById((int) $subsidiaryId);

@@ -25,6 +25,7 @@ spl_autoload_register(function (string $class): void {
 
 require __DIR__ . '/../app/helpers/helpers.php';
 require __DIR__ . '/../app/helpers/charts.php';
+require __DIR__ . '/../app/helpers/ohada.php';
 
 $config = require __DIR__ . '/../config/config.php';
 date_default_timezone_set($config['app']['timezone']);
@@ -111,6 +112,7 @@ $router->post('/exchange-rates', [ExchangeRateController::class, 'store'], [$aut
 // saisie (formulaire + import CSV) est réservée au Préparateur.
 $router->get('/financial-data/{subsidiaryId}', [FinancialDataController::class, 'periodsIndex'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
 $router->get('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'show'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
+$router->get('/financial-data/{subsidiaryId}/{periodId}/statement', [FinancialDataController::class, 'statement'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
 $router->post('/financial-data/{subsidiaryId}/{periodId}', [FinancialDataController::class, 'save'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
 $router->post('/financial-data/{subsidiaryId}/{periodId}/import', [FinancialDataController::class, 'import'], [$auth, $preparerOnly, AuthorizationMiddleware::subsidiaryScope('subsidiaryId'), $csrf]);
 

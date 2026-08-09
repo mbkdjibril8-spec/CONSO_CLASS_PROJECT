@@ -5,37 +5,49 @@
    ===================================================================== */
 
 :root {
-  /* Base neutre */
-  --color-bg: #f6f5f1;
+  /* Base neutre (chaude, harmonisée avec l'accent orange) */
+  --color-bg: #f7f4ee;
   --color-surface: #ffffff;
-  --color-surface-alt: #fbfaf7;
-  --color-border: #dcdad3;
-  --color-border-strong: #c3c0b6;
+  --color-surface-alt: #faf7f1;
+  --color-border: #e2ddd0;
+  --color-border-strong: #cbc2ac;
 
   /* Texte */
-  --color-text: #22262b;
-  --color-text-muted: #5b6169;
-  --color-text-faint: #8a8f97;
+  --color-text: #241f1a;
+  --color-text-muted: #6b6156;
+  --color-text-faint: #948a7b;
 
-  /* Structure */
-  --color-graphite: #22262b;
-  --color-graphite-2: #2f343b;
+  /* Structure (charbon chaud, plus sobre qu'un graphite froid) */
+  --color-graphite: #2a231d;
+  --color-graphite-2: #382e26;
 
-  /* Accents sémantiques UNIQUEMENT */
-  --color-positive: #1a7a4c;
-  --color-positive-bg: #e8f4ee;
-  --color-negative: #b3261e;
-  --color-negative-bg: #fbebea;
-  --color-warning: #9a6400;
-  --color-warning-bg: #fbf1de;
-  --color-info: #0a6b8a;
-  --color-info-bg: #e7f2f5;
+  /* Marque — orange + vert (identité GROUPFIN) */
+  --color-primary: #b8501c;
+  --color-primary-hover: #9c4116;
+  --color-primary-bg: #fbeadf;
+  --color-secondary: #1f7a4d;
+  --color-secondary-bg: #e6f4ec;
+
+  /* Accents sémantiques UNIQUEMENT (distincts de la marque) */
+  --color-positive: #1f7a4d;
+  --color-positive-bg: #e6f4ec;
+  --color-negative: #ad2a1f;
+  --color-negative-bg: #fbeae8;
+  --color-warning: #9c6b00;
+  --color-warning-bg: #fbf1d9;
+  --color-info: #0e6b85;
+  --color-info-bg: #e4f1f4;
 
   --radius: 4px;
   --font-sans: Inter, "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif;
 }
 
 * { box-sizing: border-box; }
+
+/* Couche filtres dynamiques (fetch, pas de rechargement) : garde le rendu
+   précédent à opacité réduite pendant le chargement — pas de flash/saut. */
+#ajax-content { transition: opacity .12s ease; }
+#ajax-content.is-loading { opacity: .45; pointer-events: none; }
 
 html, body {
   margin: 0;
@@ -47,8 +59,8 @@ html, body {
   line-height: 1.45;
 }
 
-a { color: var(--color-info); text-decoration: none; }
-a:hover { text-decoration: underline; }
+a { color: var(--color-primary); text-decoration: none; }
+a:hover { color: var(--color-primary-hover); text-decoration: underline; }
 
 h1, h2, h3, h4 { margin: 0 0 .5em 0; font-weight: 600; color: var(--color-graphite); }
 h1 { font-size: 1.5rem; }
@@ -86,28 +98,29 @@ p { margin: 0 0 .75em 0; }
   font-size: 1rem;
   color: #fff;
 }
-.app-topbar .brand span { color: #9fb8c9; }
+.app-topbar .brand span { color: #e0a679; }
 
 .app-topbar .session-info {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: .85rem;
-  color: #cfd3d8;
+  color: #d8d0c2;
 }
 
 .app-topbar form { margin: 0; }
 
 .btn-logout {
   background: transparent;
-  border: 1px solid #4a5158;
-  color: #e6e8ea;
+  border: 1px solid #5a4d3f;
+  color: #ede7db;
   padding: 5px 10px;
   border-radius: var(--radius);
   cursor: pointer;
   font-size: .8rem;
+  transition: background .15s ease;
 }
-.btn-logout:hover { background: #363b42; }
+.btn-logout:hover { background: #473c30; border-color: var(--color-primary); }
 
 .app-sidebar {
   position: fixed;
@@ -121,15 +134,16 @@ p { margin: 0 0 .75em 0; }
 .app-sidebar nav a {
   display: block;
   padding: 9px 18px;
-  color: #c7ccd1;
+  color: #d3ccbc;
   font-size: .87rem;
   border-left: 3px solid transparent;
+  transition: background .12s ease;
 }
-.app-sidebar nav a:hover { background: #383e46; text-decoration: none; color: #fff; }
+.app-sidebar nav a:hover { background: var(--color-graphite); text-decoration: none; color: #fff; }
 .app-sidebar nav a.active {
-  background: #383e46;
+  background: var(--color-graphite);
   color: #fff;
-  border-left-color: var(--color-info);
+  border-left-color: var(--color-primary);
 }
 
 .app-main {
@@ -259,6 +273,7 @@ tbody td {
   border-bottom: 1px solid var(--color-border);
   vertical-align: middle;
 }
+tbody tr { transition: background .1s ease; }
 tbody tr:hover { background: var(--color-surface-alt); }
 td.num, th.num { text-align: right; }
 
@@ -296,11 +311,12 @@ td.num, th.num { text-align: right; }
   font-size: .9rem;
   background: #fff;
   color: var(--color-text);
+  transition: border-color .12s ease, box-shadow .12s ease;
 }
 .field input:focus, .field select:focus, .field textarea:focus {
   outline: none;
-  border-color: var(--color-info);
-  box-shadow: 0 0 0 3px var(--color-info-bg);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
 }
 
 .btn {
@@ -311,11 +327,15 @@ td.num, th.num { text-align: right; }
   font-weight: 600;
   cursor: pointer;
   border: 1px solid transparent;
+  transition: background .12s ease, border-color .12s ease, transform .08s ease;
 }
-.btn-primary { background: var(--color-graphite); color: #fff; }
-.btn-primary:hover { background: var(--color-graphite-2); text-decoration: none; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--color-primary); color: #fff; }
+.btn-primary:hover { background: var(--color-primary-hover); text-decoration: none; }
+.btn-secondary { background: var(--color-secondary); color: #fff; }
+.btn-secondary:hover { background: #185f3c; text-decoration: none; }
 .btn-outline { background: #fff; border-color: var(--color-border-strong); color: var(--color-text); }
-.btn-outline:hover { background: var(--color-surface-alt); text-decoration: none; }
+.btn-outline:hover { background: var(--color-surface-alt); border-color: var(--color-primary); text-decoration: none; }
 .btn-block { width: 100%; text-align: center; }
 
 /* --------------------------------------------------------------------
@@ -353,8 +373,8 @@ td.num, th.num { text-align: right; }
   padding: 52px 58px;
   color: #eef0f2;
   background:
-    radial-gradient(circle at 15% 8%, rgba(255,255,255,.05), transparent 40%),
-    linear-gradient(165deg, #262b31 0%, #1b1f24 62%, #15181c 100%);
+    radial-gradient(circle at 15% 8%, rgba(184,80,28,.16), transparent 42%),
+    linear-gradient(165deg, #2e2721 0%, #211b16 62%, #17130f 100%);
   overflow: hidden;
 }
 .auth-brand-side::before {
@@ -376,15 +396,15 @@ td.num, th.num { text-align: right; }
   letter-spacing: .04em;
   color: #fff;
 }
-.auth-wordmark .dot { color: var(--color-info); }
-.auth-wordmark .org { font-weight: 400; color: #8b929a; letter-spacing: .02em; }
+.auth-wordmark .dot { color: var(--color-primary); }
+.auth-wordmark .org { font-weight: 400; color: #a89a89; letter-spacing: .02em; }
 
 .auth-brand-mid { position: relative; max-width: 420px; }
 .auth-brand-mid .eyebrow {
   font-size: .72rem;
   text-transform: uppercase;
   letter-spacing: .12em;
-  color: #6f9db3;
+  color: #e8a874;
   font-weight: 600;
   margin-bottom: 14px;
 }
@@ -397,7 +417,7 @@ td.num, th.num { text-align: right; }
   letter-spacing: -.01em;
 }
 .auth-brand-mid p {
-  color: #9aa1a9;
+  color: #b6ab9c;
   font-size: .92rem;
   line-height: 1.6;
   margin-bottom: 26px;
@@ -407,16 +427,18 @@ td.num, th.num { text-align: right; }
 .auth-footprint span {
   font-size: .72rem;
   letter-spacing: .03em;
-  color: #b7bcc2;
+  color: #d6c9b8;
   border: 1px solid rgba(255,255,255,.14);
   border-radius: 100px;
   padding: 4px 11px;
+  transition: border-color .15s ease, background .15s ease;
 }
+.auth-footprint span:hover { border-color: var(--color-primary); background: rgba(184,80,28,.12); }
 
 .auth-brand-foot {
   position: relative;
   font-size: .74rem;
-  color: #656b72;
+  color: #8a7d6c;
   border-top: 1px solid rgba(255,255,255,.09);
   padding-top: 18px;
 }
@@ -459,3 +481,27 @@ td.num, th.num { text-align: right; }
 .text-muted { color: var(--color-text-muted); }
 .text-faint { color: var(--color-text-faint); font-size: .78rem; }
 .empty-state { color: var(--color-text-muted); font-size: .88rem; padding: 20px 0; text-align: center; }
+
+/* --------------------------------------------------------------------
+   États financiers OHADA/SYCEBNL (présentation normalisée)
+   -------------------------------------------------------------------- */
+
+.ohada-header {
+  text-align: center;
+  font-weight: 700;
+  font-size: .92rem;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  padding: 10px 0 16px;
+  color: var(--color-graphite);
+}
+.ohada-table { width: 100%; border-collapse: collapse; font-size: .84rem; }
+.ohada-table td { padding: 5px 8px; border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.ohada-ref { width: 42px; color: var(--color-text-faint); font-variant-numeric: tabular-nums; font-size: .78rem; }
+.ohada-label { color: var(--color-text); }
+.ohada-value { width: 160px; font-variant-numeric: tabular-nums; }
+.ohada-subtotal { background: var(--color-surface-alt); font-weight: 600; }
+.ohada-subtotal .ohada-label { text-transform: uppercase; font-size: .78rem; letter-spacing: .02em; }
+.ohada-total { background: var(--color-primary-bg); font-weight: 700; border-top: 2px solid var(--color-primary); border-bottom: 2px solid var(--color-primary); }
+.ohada-total .ohada-label { text-transform: uppercase; letter-spacing: .02em; color: var(--color-graphite); }
+.ohada-total .ohada-value { color: var(--color-primary); }

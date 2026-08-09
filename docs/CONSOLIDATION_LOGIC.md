@@ -296,3 +296,43 @@ choix simple et documenté plutôt qu'un seuil dérivé statistiquement,
 cohérent avec le seuil d'anomalie de 50 % déjà utilisé en Phase 3 pour la
 variation mensuelle (deux contextes différents : écart vs un budget fixé
 à l'avance ici, variation d'un mois sur l'autre là).
+
+## États financiers au format OHADA/SYCEBNL (ajustement post-Phase 6)
+
+Sur demande utilisateur, les comptes de résultat et bilans (filiale et
+consolidé) peuvent s'afficher au format normalisé OHADA (codes REF,
+soldes intermédiaires de gestion — Marge commerciale, Valeur ajoutée,
+EBE, Résultat d'exploitation, Résultat financier, RAO, Résultat HAO,
+Résultat net). **Couche de présentation uniquement** (`app/helpers/ohada.php`) :
+le plan de comptes GROUPFIN (22 comptes, Phase 3) reste le moteur de
+saisie/validation/consolidation — décision prise avec l'utilisateur pour
+ne pas rouvrir les Phases 3 à 6 déjà testées. Chaque ligne OHADA sans
+correspondance dans le plan simplifié affiche 0,00 (comme sur un état
+réel d'une société qui ne mouvemente pas cette ligne).
+
+**Mapping retenu** (résumé — voir le code pour le détail complet) :
+- `REV + IC_REVENUE` → XB (Chiffre d'affaires) ; `COGS` → RC ; `OPEX_OTHER` → RH ;
+  `IC_EXPENSE` → RJ ; `OPEX_PERS` → RK ; `DA` → RL ; `FIN_INCOME`/`FIN_EXPENSE` →
+  TK/RM ; `TAX` → RS. Résultat HAO (XH) non tracké V1 → 0.
+- Bilan : `FIXED_ASSETS` → AI ; `RECEIVABLES`+`IC_RECEIVABLE` → BI/BJ ; `CASH` → BS ;
+  `SHARE_CAPITAL`/`RETAINED_EARNINGS` → CA/CH ; `FINANCIAL_DEBT` → DA ;
+  `PAYABLES`/`IC_PAYABLE` → DJ/DM. Stocks (BB) non tracké V1 → 0.
+- Le résultat net (XI sur le compte de résultat, CJ sur le bilan) est
+  **toujours identique entre les deux états** — jamais utilisé comme
+  variable d'ajustement (un CJ ≠ XI serait immédiatement repéré comme une
+  erreur par n'importe quel comptable).
+
+**Bug corrigé pendant l'implémentation — écart de conversion et titres
+mis en équivalence :** sur la vue consolidée, l'actif (bilan traduit,
+incluant les titres mis en équivalence de NOVA Ghana) et le passif
+(capitaux propres = Capital + Réserves + Résultat net "naïf") ne
+s'équilibraient plus (~40,8 M XOF d'écart, dont l'essentiel provenait des
+titres mis en équivalence ajoutés à l'actif sans contrepartie côté
+passif). Le modèle OHADA prévoit justement des lignes dédiées pour ce cas
+(`BU` Écart de conversion-Actif / `DV` Écart de conversion-Passif),
+laissées à 0 par oubli initial. Corrigé : ces lignes absorbent désormais
+le résidu exact (`Actif − Passif avant écart`), garantissant l'équilibre
+au centime près sans jamais toucher au résultat net affiché. Sur une
+filiale mono-devise sans mise en équivalence, ce résidu ne capture que le
+bruit d'arrondi `DECIMAL(18,2)` déjà documenté plus haut (jusqu'à
+quelques centimes) — même mécanisme, contexte différent.

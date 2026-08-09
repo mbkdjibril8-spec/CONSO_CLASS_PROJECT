@@ -129,7 +129,7 @@ class ConsolidationController extends Controller
             'accounts' => (new AccountRepository())->all(),
             'subsidiaries' => (new SubsidiaryRepository())->all(true),
             'errors' => [],
-        ]);
+        ], $request->isAjax() ? null : 'layouts/main');
     }
 
     public function adjustmentsStore(Request $request): void

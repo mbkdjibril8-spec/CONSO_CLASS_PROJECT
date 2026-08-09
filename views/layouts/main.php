@@ -65,5 +65,43 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
         <?php $content(); ?>
     </main>
 </div>
+<script>
+/**
+ * Couche "filtres dynamiques" : intercepte la soumission des formulaires
+ * marqués data-ajax-filter, récupère le fragment mis à jour en fetch()
+ * (le contrôleur détecte X-Requested-With et rend la vue sans layout),
+ * remplace #ajax-content sans recharger toute la page, et garde l'URL
+ * synchronisée (retour arrière / rechargement restent corrects).
+ */
+(function () {
+    function swap(url, pushState) {
+        var container = document.getElementById('ajax-content');
+        if (!container) { window.location.href = url; return; }
+        container.classList.add('is-loading');
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+            .then(function (r) { return r.text(); })
+            .then(function (html) {
+                var tmp = document.createElement('div');
+                tmp.innerHTML = html;
+                var fresh = tmp.querySelector('#ajax-content');
+                container.replaceWith(fresh || tmp);
+                if (pushState) { window.history.pushState({ ajax: true }, '', url); }
+            })
+            .catch(function () { window.location.href = url; });
+    }
+
+    document.addEventListener('submit', function (evt) {
+        var form = evt.target.closest('[data-ajax-filter]');
+        if (!form) { return; }
+        evt.preventDefault();
+        var params = new URLSearchParams(new FormData(form));
+        swap(form.getAttribute('action') + '?' + params.toString(), true);
+    });
+
+    window.addEventListener('popstate', function () {
+        swap(window.location.href, false);
+    });
+})();
+</script>
 </body>
 </html>
