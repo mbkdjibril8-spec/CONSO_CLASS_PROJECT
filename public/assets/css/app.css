@@ -546,4 +546,30 @@ td.num, th.num { text-align: right; }
 .ohada-subtotal .ohada-label { text-transform: uppercase; font-size: .78rem; letter-spacing: .02em; }
 .ohada-total { background: var(--color-primary-bg); font-weight: 700; border-top: 2px solid var(--color-primary); border-bottom: 2px solid var(--color-primary); }
 .ohada-total .ohada-label { text-transform: uppercase; letter-spacing: .02em; color: var(--color-graphite); }
+
+/* --------------------------------------------------------------------
+   Export PDF (impression navigateur — cohérent avec le choix "zéro
+   dépendance" du projet, voir docs/CONSOLIDATION_LOGIC.md §Phase 7).
+   Le bouton "Exporter en PDF" déclenche window.print() ; cette feuille
+   masque la navigation et présente un en-tête document sur le papier.
+   -------------------------------------------------------------------- */
+
+.print-header { display: none; }
+
+@media print {
+  .app-topbar, .app-sidebar, .no-print, [data-ajax-filter] { display: none !important; }
+  .app-main { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
+  body { background: #fff; }
+  .print-header {
+    display: block;
+    margin-bottom: 24px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #000;
+  }
+  .print-header-brand { font-size: 1.3rem; font-weight: 800; letter-spacing: .04em; }
+  .print-header-meta { color: #555; font-size: .82rem; margin-top: 2px; }
+  .panel { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; }
+  .kpi-row { break-inside: avoid; }
+  a[href]::after { content: ""; }
+}
 .ohada-total .ohada-value { color: var(--color-primary); }

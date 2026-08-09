@@ -53,6 +53,7 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
                 <?php $navLink('subsidiaries/tree', 'Hiérarchie'); ?>
                 <?php $navLink('exchange-rates', 'Taux de change'); ?>
                 <?php $navLink('consolidation', 'Consolidation'); ?>
+                <?php $navLink('financial-statements', 'Liasse groupe'); ?>
                 <?php $navLink('audit', "Journal d'audit"); ?>
             <?php elseif ($user->subsidiaryId): ?>
                 <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>

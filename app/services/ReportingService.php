@@ -160,6 +160,46 @@ class ReportingService
     }
 
     /**
+     * Classement complet des filiales en intégration globale pour une
+     * période (CA/EBITDA Actual vs Budget, marge EBITDA, résultat net),
+     * en XOF. Utilisé par le dashboard CODIR pour aller au-delà du seul
+     * graphique de contribution (un CODIR veut le tableau détaillé, pas
+     * seulement les barres). Trié par EBITDA décroissant.
+     * @return array<int, array{subsidiary: \App\Models\Subsidiary, revenue: array, ebitda: array, netIncome: float, ebitdaMarginPct: ?float}>
+     */
+    public function subsidiaryScorecard(int $periodId): array
+    {
+        $rates = $this->conversion->ratesForPeriod($periodId);
+        $groupedActual = $this->financialData->isAmountsGroupedBySubsidiary($periodId);
+        $groupedBudget = $this->budgets->isAmountsGroupedBySubsidiary($periodId);
+        $subsidiariesById = [];
+        foreach ($this->subsidiaries->all(true) as $s) {
+            $subsidiariesById[$s->id] = $s;
+        }
+
+        $rows = [];
+        foreach ($this->fullMethodSubsidiaryIds() as $sid) {
+            if (!isset($subsidiariesById[$sid])) {
+                continue;
+            }
+            $actual = $this->convertAndSum($groupedActual, [$sid], $rates);
+            $budget = $this->convertAndSum($groupedBudget, [$sid], $rates);
+            $revenueActual = $this->validation->computeRevenue($actual);
+            $ebitdaActual = $this->validation->computeEbitda($actual);
+
+            $rows[] = [
+                'subsidiary' => $subsidiariesById[$sid],
+                'revenue' => $this->variance->compute($revenueActual, $this->validation->computeRevenue($budget), true),
+                'ebitda' => $this->variance->compute($ebitdaActual, $this->validation->computeEbitda($budget), true),
+                'netIncome' => $this->validation->computeNetIncome($actual),
+                'ebitdaMarginPct' => $revenueActual != 0.0 ? ($ebitdaActual / $revenueActual) * 100 : null,
+            ];
+        }
+        usort($rows, fn ($a, $b) => $b['ebitda']['actual'] <=> $a['ebitda']['actual']);
+        return $rows;
+    }
+
+    /**
      * Détail Budget vs Actual par compte IS, pour le mois sélectionné et en
      * cumul depuis janvier (YTD), en XOF. Utilisé par l'écran dédié
      * Budget vs Actual (item §2.10 du cahier des charges).

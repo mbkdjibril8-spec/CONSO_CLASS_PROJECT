@@ -317,4 +317,45 @@ class ConsolidationService
 
         return [true, $runId, null];
     }
+
+    /**
+     * Dérive le résumé (résultat net groupe/minoritaires, bilan groupe/
+     * minoritaires) d'un run terminé à partir de ses lineItems déjà chargés.
+     * Centralisé ici pour que le détail d'un run (ConsolidationController::show)
+     * et la liasse groupe (ConsolidationController::statements) affichent
+     * exactement les mêmes chiffres, calculés une seule fois.
+     * @param array<string, float> $lineItems
+     */
+    public function computeSummary(array $lineItems, int $runId): array
+    {
+        $minorityTotals = $this->minorityInterests->totalsForRun($runId);
+        $netIncomeFullAgg = (new ValidationService())->computeNetIncome($lineItems);
+        $eqIncome = $lineItems['EQ_METHOD_INCOME'] ?? 0;
+        $eqInvestment = $lineItems['EQ_METHOD_INVESTMENT'] ?? 0;
+
+        $totalNetIncome = $netIncomeFullAgg + $eqIncome;
+        $groupNetIncome = $totalNetIncome - $minorityTotals['net_income'];
+
+        $totalAssetsExEquityMethod = ($lineItems['FIXED_ASSETS'] ?? 0) + ($lineItems['RECEIVABLES'] ?? 0)
+            + ($lineItems['IC_RECEIVABLE'] ?? 0) + ($lineItems['CASH'] ?? 0);
+        $totalAssets = $totalAssetsExEquityMethod + $eqInvestment;
+        $totalLiabilities = ($lineItems['PAYABLES'] ?? 0) + ($lineItems['IC_PAYABLE'] ?? 0) + ($lineItems['FINANCIAL_DEBT'] ?? 0);
+        // Dérivé de Actif - Passif - Minoritaires (et non Capital+Réserves+RN) pour
+        // absorber l'écart de conversion des filiales en devise étrangère et
+        // garantir l'équilibre exact du bilan consolidé — voir CONSOLIDATION_LOGIC.md.
+        $groupEquity = $totalAssetsExEquityMethod - $totalLiabilities - $minorityTotals['equity'] + $eqInvestment;
+
+        return [
+            'netIncomeFullAgg' => $netIncomeFullAgg,
+            'eqIncome' => $eqIncome,
+            'eqInvestment' => $eqInvestment,
+            'totalNetIncome' => $totalNetIncome,
+            'groupNetIncome' => $groupNetIncome,
+            'minorityNetIncome' => $minorityTotals['net_income'],
+            'totalAssets' => $totalAssets,
+            'totalLiabilities' => $totalLiabilities,
+            'groupEquity' => $groupEquity,
+            'minorityEquity' => $minorityTotals['equity'],
+        ];
+    }
 }

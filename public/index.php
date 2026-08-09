@@ -139,6 +139,7 @@ $router->post('/consolidation/run', [ConsolidationController::class, 'run'], [$a
 $router->get('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsIndex'], [$auth, $groupRoles]);
 $router->post('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsStore'], [$auth, $periodManagers, $csrf]);
 $router->get('/consolidation/{id}', [ConsolidationController::class, 'show'], [$auth, $groupRoles]);
+$router->get('/financial-statements', [ConsolidationController::class, 'statements'], [$auth, $groupRoles]);
 
 // --- Notifications -------------------------------------------------------------
 $router->get('/notifications', [NotificationController::class, 'index'], [$auth]);

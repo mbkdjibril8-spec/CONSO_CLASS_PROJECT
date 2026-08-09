@@ -4,9 +4,12 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Request;
+use App\Repositories\ConsolidationLineItemRepository;
+use App\Repositories\ConsolidationRunRepository;
 use App\Repositories\ReportingPeriodRepository;
 use App\Repositories\SubsidiaryRepository;
 use App\Repositories\UserRepository;
+use App\Services\ConsolidationService;
 use App\Services\ReportingService;
 
 /**
@@ -70,7 +73,21 @@ class DashboardController extends Controller
             $data['kpis'] = $reporting->kpis($period->id, $targetIds);
             $data['trend'] = $reporting->trend($period->year, $targetIds);
             $data['contribution'] = $subsidiaryFilter === '' ? $reporting->contributionBySubsidiary($period->id) : [];
+            $data['scorecard'] = $subsidiaryFilter === '' ? $reporting->subsidiaryScorecard($period->id) : [];
             $data['alerts'] = $reporting->alerts($period->id);
+
+            // Situation bilancielle groupe : uniquement en vue groupe complète (non filtrée),
+            // uniquement si un run de consolidation existe déjà pour cette période — le bilan
+            // consolidé n'a de sens qu'au niveau du run officiel (Phase 5), jamais recalculé
+            // silencieusement à partir de la vision cumulée du dashboard (voir CONSOLIDATION_LOGIC.md).
+            if ($subsidiaryFilter === '' && $countryFilter === '') {
+                $latestRun = (new ConsolidationRunRepository())->latestCompletedForPeriod($period->id);
+                if ($latestRun) {
+                    $runLineItems = (new ConsolidationLineItemRepository())->forRun((int) $latestRun['id']);
+                    $data['balanceSheetSummary'] = (new ConsolidationService())->computeSummary($runLineItems, (int) $latestRun['id']);
+                    $data['balanceSheetRun'] = $latestRun;
+                }
+            }
         } else {
             $mySubsidiary = $user->subsidiaryId ? $subsidiaryRepo->findById($user->subsidiaryId) : null;
             $data['mySubsidiary'] = $mySubsidiary;

@@ -380,3 +380,67 @@ est centralisé dans `stream_csv_download()` (`app/helpers/helpers.php`)
 pour garantir que les 3 exports (run de consolidation, paquet filiale,
 vue dashboard) produisent un fichier identique en convention, même si
 leurs colonnes diffèrent.
+
+## Liasse groupe et dashboard CODIR enrichi (post-Phase 7, intégré à la Phase 8)
+
+### Liasse groupe (`/financial-statements`)
+Écran dédié présentant la liasse complète (compte de résultat + bilan
+actif/passif, format OHADA) du dernier run **terminé** d'une période
+choisie, sans avoir à connaître l'id d'un run précis. Réutilise
+strictement les mêmes helpers de rendu (`app/helpers/ohada.php`) que la
+section dépliable déjà présente sur `/consolidation/{id}` — même
+formules, mêmes chiffres, un seul endroit où ils sont calculés (voir
+point suivant). Ce n'est pas un nouveau moteur de calcul : c'est une
+vue de consultation directe, pensée pour un usage "je veux voir les
+états financiers du groupe", distincte de `/consolidation/{id}` qui
+reste l'écran d'audit technique d'un run (étapes, éliminations,
+intérêts minoritaires).
+
+### Centralisation du calcul de synthèse (`ConsolidationService::computeSummary()`)
+Avant cet ajout, le calcul du résultat net groupe/minoritaires et du
+bilan groupe/minoritaires (dérivation Actif − Passif, cf. §Écart de
+conversion) n'existait que dans `ConsolidationController::show()`. Pour
+alimenter la liasse groupe et le nouveau panneau bilan du dashboard avec
+exactement les mêmes chiffres — sans dupliquer une formule financière
+sensible à trois endroits — cette logique a été extraite en une méthode
+unique du service (`computeSummary(array $lineItems, int $runId): array`),
+appelée par les trois consommateurs (détail d'un run, liasse groupe,
+panneau bilan du dashboard). Un seul endroit à corriger si la formule
+évolue ; les trois écrans ne peuvent plus diverger entre eux.
+
+### Dashboard CODIR : marges, bilan groupe, classement des filiales
+- **Marges (EBITDA %, nette %)** : calculées en vue (ratio de deux
+  chiffres déjà validés par `ReportingService::kpis()`), pas de nouvelle
+  donnée ni de nouveau calcul métier — juste une division.
+- **Situation bilancielle groupe** : affichée uniquement (a) en vue
+  groupe non filtrée (un bilan consolidé n'a pas de sens "par filiale"
+  ou "par pays" — un run de consolidation porte toujours sur tout le
+  périmètre) et (b) seulement si un run **terminé** existe déjà pour la
+  période affichée. Si aucun run n'existe, le panneau est simplement
+  absent (pas de placeholder "0 XOF" trompeur) — cohérent avec la règle
+  "aucune valeur en dur / aucune fausse donnée" du projet.
+- **Classement des filiales (`ReportingService::subsidiaryScorecard()`)** :
+  tableau complet (CA, EBITDA, écarts vs budget, marge EBITDA, résultat
+  net) par filiale en intégration globale, en complément du graphique de
+  contribution déjà existant — un CODIR veut le chiffre exact, pas
+  seulement la barre.
+- **Bug corrigé pendant l'implémentation** : le panneau bilan groupe
+  utilisait `$balanceSheetRun['period_label']`, une colonne absente de
+  la requête `ConsolidationRunRepository::latestCompletedForPeriod()`
+  (pas de jointure sur `reporting_periods`, à la différence de `all()`
+  et `findById()`) — provoquait un avertissement PHP silencieux (chaîne
+  vide affichée) sans faire planter la page. Corrigé en réutilisant la
+  variable `$period->label` déjà disponible dans la vue plutôt que
+  d'ajouter une jointure superflue au repository pour une seule colonne
+  déjà connue de l'appelant.
+
+### Export PDF : impression navigateur plutôt qu'une bibliothèque
+Comme pour CSV vs XLSX, le export PDF n'ajoute aucune dépendance : un
+bouton "Exporter en PDF" déclenche `window.print()`, et une feuille de
+style dédiée (`@media print` dans `app.css`) masque la navigation,
+ajoute un en-tête document (groupe, période, date de génération) et
+évite les coupures de page au milieu d'un panneau (`break-inside:
+avoid`). Tout navigateur moderne propose "Enregistrer en PDF" comme
+destination d'impression — c'est donc un export PDF complet sans code
+serveur de génération PDF. Appliqué au dashboard CODIR et à la liasse
+groupe, les deux écrans où l'utilisateur a demandé cette fonctionnalité.

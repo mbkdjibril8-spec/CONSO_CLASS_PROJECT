@@ -22,18 +22,28 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
 };
 ?>
 <div id="ajax-content">
+<div class="print-header">
+    <div class="print-header-brand">NOVA AFRICA GROUP</div>
+    <div>Tableau de bord CODIR<?= $period ? ' — ' . h($period->label) : '' ?></div>
+    <div class="print-header-meta">Généré le <?= h(date('d/m/Y \à H:i')) ?> par <?= h($user->name) ?></div>
+</div>
 <div class="page-header">
     <div>
         <h1>Tableau de bord</h1>
         <div class="subtitle">Connecté en tant que <?= h(role_label($user->roleCode)) ?><?= $period ? ' · ' . h($period->label) : '' ?></div>
     </div>
+    <?php if (isset($kpis)): ?>
+        <div class="no-print">
+            <button type="button" class="btn btn-outline" onclick="window.print()">Exporter en PDF</button>
+        </div>
+    <?php endif; ?>
 </div>
 
 <?php if (!$period): ?>
     <div class="panel"><div class="empty-state">Aucune période disponible.</div></div>
 <?php else: ?>
 
-<div class="panel">
+<div class="panel no-print">
     <form method="get" action="<?= h(base_url('dashboard')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
         <div class="field" style="margin:0">
             <label for="period_id">Période</label>
@@ -100,6 +110,58 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
         <?php $renderKpi('Résultat net', $kpis['netIncome'], 'kpi-ni'); ?>
     </div>
 
+    <?php
+    $rev = $kpis['revenue']['actual'];
+    $ebitdaMarginPct = $rev != 0.0 ? ($kpis['ebitda']['actual'] / $rev) * 100 : null;
+    $netMarginPct = $rev != 0.0 ? ($kpis['netIncome']['actual'] / $rev) * 100 : null;
+    ?>
+    <?php if ($ebitdaMarginPct !== null): ?>
+    <div class="kpi-row" style="margin-top:-10px">
+        <div class="kpi">
+            <div class="kpi-label">Marge EBITDA</div>
+            <div class="kpi-value"><?= number_format($ebitdaMarginPct, 1, ',', ' ') ?> %</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-label">Marge nette</div>
+            <div class="kpi-value"><?= number_format($netMarginPct, 1, ',', ' ') ?> %</div>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if (isset($balanceSheetSummary)): ?>
+    <div class="panel">
+        <div class="panel-title">
+            Situation bilancielle groupe — <?= h($period->label) ?>
+            <a href="<?= h(base_url('financial-statements?period_id=' . $balanceSheetRun['period_id'])) ?>" style="float:right;font-weight:normal;text-transform:none;letter-spacing:normal">Voir la liasse complète &rarr;</a>
+        </div>
+        <?php $debtToEquity = ($balanceSheetSummary['groupEquity'] + $balanceSheetSummary['minorityEquity']) != 0.0
+            ? ($balanceSheetSummary['totalLiabilities'] / ($balanceSheetSummary['groupEquity'] + $balanceSheetSummary['minorityEquity'])) * 100
+            : null; ?>
+        <div class="kpi-row">
+            <div class="kpi">
+                <div class="kpi-label">Total bilan consolidé</div>
+                <div class="kpi-value"><?= format_compact_amount($balanceSheetSummary['totalAssets']) ?> <span class="text-faint" style="font-size:.7rem">XOF</span></div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Capitaux propres (groupe)</div>
+                <div class="kpi-value"><?= format_compact_amount($balanceSheetSummary['groupEquity']) ?> <span class="text-faint" style="font-size:.7rem">XOF</span></div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-label">Dettes totales</div>
+                <div class="kpi-value"><?= format_compact_amount($balanceSheetSummary['totalLiabilities']) ?> <span class="text-faint" style="font-size:.7rem">XOF</span></div>
+            </div>
+            <?php if ($debtToEquity !== null): ?>
+            <div class="kpi">
+                <div class="kpi-label">Ratio d'endettement</div>
+                <div class="kpi-value"><?= number_format($debtToEquity, 0, ',', ' ') ?> %</div>
+                <div class="kpi-sub">Dettes / Capitaux propres totaux</div>
+            </div>
+            <?php endif; ?>
+        </div>
+        <p class="text-faint" style="margin-top:6px">Issu du dernier run de consolidation officiel de cette période (Phase 5) — distinct de la vision cumulée ci-dessus. Voir <a href="<?= h(base_url('financial-statements')) ?>">Liasse groupe</a> pour le détail complet.</p>
+    </div>
+    <?php endif; ?>
+
     <div class="panel">
         <div class="panel-title">Évolution <?= h((string) $period->year) ?> — vision cumulée<?= $user->isGroupLevel() && $subsidiaryFilter === '' ? ' du groupe' : '' ?></div>
         <?= render_trend_chart($trend, 'trend-main') ?>
@@ -115,6 +177,46 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
         <div class="panel">
             <div class="panel-title">Contribution EBITDA par filiale — <?= h($period->label) ?></div>
             <?= render_contribution_chart($contribution) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($scorecard)): ?>
+        <div class="panel">
+            <div class="panel-title">Performance par filiale — <?= h($period->label) ?></div>
+            <table>
+                <thead>
+                <tr>
+                    <th>Filiale</th>
+                    <th class="num">CA Actual</th>
+                    <th class="num">CA vs Budget</th>
+                    <th class="num">EBITDA Actual</th>
+                    <th class="num">EBITDA vs Budget</th>
+                    <th class="num">Marge EBITDA</th>
+                    <th class="num">Résultat net</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php foreach ($scorecard as $row): ?>
+                    <tr>
+                        <td><a href="<?= h(base_url('subsidiaries/' . $row['subsidiary']->id)) ?>"><?= h($row['subsidiary']->code) ?></a> <span class="text-faint"><?= h($row['subsidiary']->country) ?></span></td>
+                        <td class="num"><?= format_compact_amount($row['revenue']['actual']) ?></td>
+                        <td class="num">
+                            <?php if ($row['revenue']['variancePct'] !== null): ?>
+                                <span class="kpi-delta <?= $row['revenue']['favorable'] ? 'is-favorable' : 'is-unfavorable' ?>"><?= $row['revenue']['variance'] >= 0 ? '&uarr;' : '&darr;' ?> <?= number_format(abs($row['revenue']['variancePct']), 1, ',', ' ') ?>%</span>
+                            <?php else: ?>&mdash;<?php endif; ?>
+                        </td>
+                        <td class="num"><?= format_compact_amount($row['ebitda']['actual']) ?></td>
+                        <td class="num">
+                            <?php if ($row['ebitda']['variancePct'] !== null): ?>
+                                <span class="kpi-delta <?= $row['ebitda']['favorable'] ? 'is-favorable' : 'is-unfavorable' ?>"><?= $row['ebitda']['variance'] >= 0 ? '&uarr;' : '&darr;' ?> <?= number_format(abs($row['ebitda']['variancePct']), 1, ',', ' ') ?>%</span>
+                            <?php else: ?>&mdash;<?php endif; ?>
+                        </td>
+                        <td class="num"><?= $row['ebitdaMarginPct'] !== null ? number_format($row['ebitdaMarginPct'], 1, ',', ' ') . ' %' : '—' ?></td>
+                        <td class="num"><?= format_compact_amount($row['netIncome']) ?></td>
+                    </tr>
+                <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     <?php endif; ?>
 

@@ -1,8 +1,10 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 7 — Notifications, audit, exports : TERMINÉE ✅**
-Prochaine étape : Phase 8 — Tests, documentation, packaging.
+**Phase 8 — Tests, documentation, packaging : TERMINÉE ✅** (inclut la liasse groupe et le dashboard CODIR
+enrichi, ajoutés au périmètre à la demande de l'utilisateur le 2026-08-09).
+**GROUPFIN V1 est complet.** Prochaines étapes : voir "Cuts / V2 backlog" ci-dessous (productisation multi-client,
+dynamisme approfondi) — explicitement reportées après V1 par décision utilisateur.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -158,6 +160,55 @@ Toutes vérifiées en conditions réelles (HTTP via curl) :
 - Base de démonstration remise à l'état de départ après les tests (5/6 filiales soumises, Maroc en brouillon, mismatch Sénégal/France déclaré, aucun run de consolidation) via rejeu complet `schema.sql` + `seed.sql` + les 3 scripts `seed_*.php`.
 - `php -l` sur l'intégralité de `app/ public/ views/ database/` : aucune erreur de syntaxe.
 
+## Phase 8 — Réalisé (en cours)
+
+### Ajout de périmètre demandé par l'utilisateur (2026-08-09) : liasse groupe + dashboard CODIR enrichi
+- **Liasse groupe** (`/financial-statements`, nav "Liasse groupe", rôles groupe) : compte de résultat + bilan
+  consolidés au format OHADA pour le dernier run terminé d'une période choisie (sélecteur AJAX), export CSV
+  (réutilise `/exports/consolidation/{id}`) et export PDF (impression navigateur).
+- **`ConsolidationService::computeSummary()`** : calcul du résumé consolidé (résultat net groupe/minoritaires,
+  bilan groupe/minoritaires) extrait de `ConsolidationController::show()` vers le service, pour être partagé
+  sans duplication entre le détail d'un run, la liasse groupe et le nouveau panneau bilan du dashboard.
+- **Dashboard CODIR enrichi** : marges (EBITDA %, nette %), panneau "Situation bilancielle groupe" (dernier run
+  terminé de la période, ratio d'endettement — absent si aucun run n'existe, jamais de valeur factice),
+  tableau de classement complet des filiales (`ReportingService::subsidiaryScorecard()` : CA/EBITDA/écarts
+  budget/marge/résultat net par filiale, au-delà du seul graphique de contribution déjà existant).
+- **Export PDF** (dashboard + liasse groupe) : bouton "Exporter en PDF" déclenchant `window.print()` + feuille
+  `@media print` dédiée (masque nav/filtres, en-tête document, pas de coupure de page au milieu d'un panneau) —
+  zéro dépendance serveur, cohérent avec le choix CSV vs XLSX de la Phase 7.
+- Voir `docs/CONSOLIDATION_LOGIC.md` §"Liasse groupe et dashboard CODIR enrichi" pour le détail et un bug
+  corrigé pendant l'implémentation (`period_label` absent de `latestCompletedForPeriod()`).
+
+### Suite de tests (`tests/`)
+Micro-framework maison sans dépendance (`tests/framework.php` : `TestRunner::test()`, `assert_equal()`,
+`assert_float_equal()`, `assert_true()`, `assert_null()`), lancé via `php tests/run.php`. 24 tests couvrant la
+logique de calcul pure : `ValidationService` (équation bilancielle, tolérance d'arrondi, anomalies, signes),
+`BudgetVarianceService` (sens favorable/défavorable produit vs charge), `CurrencyConversionService` (taux
+moyen vs clôture, taux manquant), `app/helpers/ohada.php` (soldes intermédiaires de gestion, plug de l'écart
+de conversion côté BU/DV — regression test direct du bug XI≠CJ corrigé plus tôt). Workflow/RBAC/pipeline de
+consolidation restent couverts par le protocole curl manuel (voir DoD de chaque phase ci-dessus) — ce sont des
+comportements dépendant de l'état en base et de l'authentification, hors périmètre naturel d'un test unitaire
+rapide sans dépendance de test (pas de PHPUnit).
+
+### Documentation livrée
+`README.md` (installation, stack, réutilisation), `USER_MANUAL.md` (guide par rôle, comptes de démonstration,
+tous les écrans), `TECHNICAL_DOCUMENTATION.md` (architecture, sécurité, modèle de données, points d'extension,
+déploiement) — les trois en français. `docs/CONSOLIDATION_LOGIC.md` relu et complété au fil de chaque phase,
+à jour.
+
+## Vérifications exécutées (DoD Phase 8)
+- `php tests/run.php` : 24/24 tests réussis, code de sortie 0.
+- `php -l` sur l'intégralité de `app/ public/ views/ database/ tests/` : aucune erreur de syntaxe.
+- Liasse groupe et panneau bilan du dashboard vérifiés avec un run de consolidation réel (période décembre
+  2026) : résultat net consolidé et total bilan affichés identiques aux valeurs vérifiées à la main en Phase 5
+  (3 084 176 188,74 XOF de bilan). RBAC vérifié : 403 pour un Préparateur, 200 pour le DAF (lecture seule).
+- Marge EBITDA affichée (14,6 %) vérifiée à la main : 198 750 149,75 / 1 363 651 060,27 XOF.
+- Export PDF (dashboard + liasse groupe) vérifié visuellement : navigation masquée, en-tête document présent,
+  panneaux non coupés au milieu par un saut de page.
+- Base de démonstration remise à l'état de départ après tous les tests (5/6 filiales soumises, Maroc en
+  brouillon, mismatch Sénégal/France déclaré, aucun run de consolidation).
+- Dépôt Git initialisé et poussé sur `https://github.com/mbkdjibril8-spec/CONSO_CLASS_PROJECT` (branche `main`).
+
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).
 - Répertoires `app/controllers`, `app/models`, etc. restent en minuscules (conformes à l'arborescence du cahier des charges) ; les classes utilisent des namespaces `App\Controllers`, `App\Models`... en PascalCase — l'autoloader fait la conversion de casse.
@@ -168,12 +219,9 @@ Toutes vérifiées en conditions réelles (HTTP via curl) :
 ## Cuts / V2 backlog
 - Hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.
 - **Productisation / revente à d'autres entreprises (discuté 2026-08-08, décision utilisateur : traiter après la fin du V1)** : l'architecture est déjà single-tenant/réutilisable (une base = un groupe), mais deux choses restent codées en dur pour NOVA AFRICA GROUP : (1) le nom du groupe dans `views/layouts/main.php` et `views/auth/login.php` (à sortir vers `config.php`, ~30 min) ; (2) le plan de comptes est référencé par code (`REV`, `COGS`...) dans `ValidationService` — un nouveau client peut renommer les libellés mais pas changer la structure sans toucher au code. Modèle retenu pour la revente : une installation (base + config) par client, pas de multi-tenant (rejeté : chantier de plusieurs semaines, risque sécurité de fuite de données entre clients pour un bénéfice non demandé).
-- **UX "dynamisme" approfondi (demandé 2026-08-09, à traiter après la Phase 8)** : boutons "retour à l'onglet/page précédente" et autres micro-interactions de navigation au-delà des filtres AJAX déjà livrés (dashboard, Budget vs Actual, taux de change, intercompany, ajustements). L'utilisateur a explicitement choisi de terminer le cahier des charges (Phases 7-8) avant de revenir sur ce point — ne pas l'entamer avant.
+- **UX "dynamisme" approfondi (demandé 2026-08-09, débloqué maintenant que la Phase 8 est terminée)** : boutons "retour à l'onglet/page précédente" et autres micro-interactions de navigation au-delà des filtres AJAX déjà livrés (dashboard, Budget vs Actual, taux de change, intercompany, ajustements, liasse groupe). L'utilisateur avait explicitement choisi de terminer le cahier des charges (Phases 7-8) avant d'y revenir — plus aucun blocage, mais reste à traiter sur demande explicite plutôt qu'unilatéralement.
 
-## Prochaines étapes (Phase 8)
-- Suite de tests (couverture des services critiques : `ValidationService`, `WorkflowService`, `ConsolidationService`, conversion devises).
-- `README.md` (français) : installation, démarrage, structure du projet.
-- `USER_MANUAL.md` (français) : guide utilisateur par rôle.
-- `TECHNICAL_DOCUMENTATION.md` : architecture, choix techniques.
-- Relecture finale de `docs/CONSOLIDATION_LOGIC.md`.
-- Vérification finale `.gitignore`, packaging `GROUPFIN.zip`.
+## Prochaines étapes
+Les 8 phases du cahier des charges sont terminées et vérifiées. Il n'y a plus de prochaine étape imposée par
+le cahier des charges initial — la suite dépend des priorités de l'utilisateur parmi le backlog V2 ci-dessus
+(productisation multi-client, dynamisme approfondi) ou de nouvelles demandes fonctionnelles.

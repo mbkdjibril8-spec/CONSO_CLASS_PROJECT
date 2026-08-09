@@ -16,17 +16,18 @@ use App\Repositories\ReportingPeriodRepository;
 use App\Repositories\SubsidiaryRepository;
 use App\Services\AuditService;
 use App\Services\ConsolidationService;
-use App\Services\ValidationService;
 
 class ConsolidationController extends Controller
 {
     private ReportingPeriodRepository $periods;
     private ConsolidationRunRepository $runs;
+    private ConsolidationService $consolidation;
 
     public function __construct()
     {
         $this->periods = new ReportingPeriodRepository();
         $this->runs = new ConsolidationRunRepository();
+        $this->consolidation = new ConsolidationService();
     }
 
     public function index(Request $request): void
@@ -66,38 +67,7 @@ class ConsolidationController extends Controller
         $lineItems = (new ConsolidationLineItemRepository())->forRun($runId);
         $accounts = (new AccountRepository())->allByCode();
 
-        $summary = null;
-        if ($run['status'] === 'completed') {
-            $minorityTotals = (new MinorityInterestRepository())->totalsForRun($runId);
-            $netIncomeFullAgg = (new ValidationService())->computeNetIncome($lineItems);
-            $eqIncome = $lineItems['EQ_METHOD_INCOME'] ?? 0;
-            $eqInvestment = $lineItems['EQ_METHOD_INVESTMENT'] ?? 0;
-
-            $totalNetIncome = $netIncomeFullAgg + $eqIncome;
-            $groupNetIncome = $totalNetIncome - $minorityTotals['net_income'];
-
-            $totalAssetsExEquityMethod = ($lineItems['FIXED_ASSETS'] ?? 0) + ($lineItems['RECEIVABLES'] ?? 0)
-                + ($lineItems['IC_RECEIVABLE'] ?? 0) + ($lineItems['CASH'] ?? 0);
-            $totalAssets = $totalAssetsExEquityMethod + $eqInvestment;
-            $totalLiabilities = ($lineItems['PAYABLES'] ?? 0) + ($lineItems['IC_PAYABLE'] ?? 0) + ($lineItems['FINANCIAL_DEBT'] ?? 0);
-            // Dérivé de Actif - Passif - Minoritaires (et non Capital+Réserves+RN) pour
-            // absorber l'écart de conversion des filiales en devise étrangère et
-            // garantir l'équilibre exact du bilan consolidé — voir CONSOLIDATION_LOGIC.md.
-            $groupEquity = $totalAssetsExEquityMethod - $totalLiabilities - $minorityTotals['equity'] + $eqInvestment;
-
-            $summary = [
-                'netIncomeFullAgg' => $netIncomeFullAgg,
-                'eqIncome' => $eqIncome,
-                'eqInvestment' => $eqInvestment,
-                'totalNetIncome' => $totalNetIncome,
-                'groupNetIncome' => $groupNetIncome,
-                'minorityNetIncome' => $minorityTotals['net_income'],
-                'totalAssets' => $totalAssets,
-                'totalLiabilities' => $totalLiabilities,
-                'groupEquity' => $groupEquity,
-                'minorityEquity' => $minorityTotals['equity'],
-            ];
-        }
+        $summary = $run['status'] === 'completed' ? $this->consolidation->computeSummary($lineItems, $runId) : null;
 
         $this->view('consolidation/show', [
             'title' => 'Run de consolidation — ' . $run['period_label'],
@@ -110,6 +80,47 @@ class ConsolidationController extends Controller
             'eliminations' => (new EliminationRepository())->forRun($runId),
             'rates' => (new ExchangeRateRepository())->forPeriod((int) $run['period_id']),
         ]);
+    }
+
+    /**
+     * Liasse groupe complète : compte de résultat + bilan (actif/passif)
+     * au format OHADA/SYCEBNL pour le dernier run terminé d'une période
+     * choisie. Contrairement à /consolidation/{id} (détail technique d'un
+     * run précis : étapes, éliminations, intérêts minoritaires), cet écran
+     * est pensé comme le document de synthèse consultable directement
+     * (sélecteur de période, export CSV/PDF), sans devoir connaître l'id
+     * d'un run.
+     */
+    public function statements(Request $request): void
+    {
+        $latestCompletedByPeriod = [];
+        foreach ($this->runs->all() as $r) {
+            if ($r['status'] !== 'completed') {
+                continue;
+            }
+            $pid = (int) $r['period_id'];
+            if (!isset($latestCompletedByPeriod[$pid])) {
+                $latestCompletedByPeriod[$pid] = $r; // all() trié par started_at DESC : premier = plus récent
+            }
+        }
+
+        $selectedPeriodId = (int) $request->query('period_id', 0);
+        if ($selectedPeriodId === 0 || !isset($latestCompletedByPeriod[$selectedPeriodId])) {
+            $selectedPeriodId = $latestCompletedByPeriod !== [] ? (int) array_key_first($latestCompletedByPeriod) : 0;
+        }
+
+        $run = $selectedPeriodId !== 0 ? $latestCompletedByPeriod[$selectedPeriodId] : null;
+        $lineItems = $run ? (new ConsolidationLineItemRepository())->forRun((int) $run['id']) : [];
+        $summary = $run ? $this->consolidation->computeSummary($lineItems, (int) $run['id']) : null;
+
+        $this->view('consolidation/statements', [
+            'title' => 'Liasse groupe',
+            'periodsWithRuns' => $latestCompletedByPeriod,
+            'selectedPeriodId' => $selectedPeriodId,
+            'run' => $run,
+            'lineItems' => $lineItems,
+            'summary' => $summary,
+        ], $request->isAjax() ? null : 'layouts/main');
     }
 
     public function adjustmentsIndex(Request $request): void
