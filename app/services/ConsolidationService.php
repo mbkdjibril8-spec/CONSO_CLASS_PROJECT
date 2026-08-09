@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Core\Request;
 use App\Models\ReportingPeriod;
+use App\Models\Role;
 use App\Models\User;
 use App\Repositories\AccountRepository;
 use App\Repositories\ConsolidationAdjustmentRepository;
@@ -13,6 +14,7 @@ use App\Repositories\EliminationRepository;
 use App\Repositories\FinancialDataRepository;
 use App\Repositories\IntercompanyRepository;
 use App\Repositories\MinorityInterestRepository;
+use App\Repositories\NotificationRepository;
 use App\Repositories\SubsidiaryRepository;
 
 /**
@@ -37,6 +39,7 @@ class ConsolidationService
     private CurrencyConversionService $conversion;
     private WorkflowService $workflow;
     private AuditService $audit;
+    private NotificationRepository $notifications;
 
     public function __construct()
     {
@@ -52,6 +55,7 @@ class ConsolidationService
         $this->conversion = new CurrencyConversionService();
         $this->workflow = new WorkflowService();
         $this->audit = new AuditService();
+        $this->notifications = new NotificationRepository();
     }
 
     /** @return array{0: bool, 1: int, 2: string|null} [succès, run_id, message d'erreur] */
@@ -76,7 +80,7 @@ class ConsolidationService
             $details = 'Paquets non validés : ' . implode(', ', $notValidated);
             $this->runs->completeStep($stepId, 'failed', $details);
             $this->runs->complete($runId, 'failed', $details);
-            $this->audit->logChange($actor, 'consolidation_run_failed', 'consolidation_run', $runId, null, ['reason' => $details], $request);
+            $this->audit->logChange($actor, 'consolidation_run_failed', 'consolidation_run', $runId, null, ['reason' => $details], $request, null, $period->id);
             return [false, $runId, $details];
         }
         $fullMethod = array_values(array_filter($subsidiaries, fn ($s) => $s->consolidationMethod === 'full'));
@@ -294,7 +298,22 @@ class ConsolidationService
         }
 
         $this->runs->complete($runId, 'completed');
-        $this->audit->logChange($actor, 'consolidation_run_completed', 'consolidation_run', $runId, null, ['period_id' => $period->id], $request);
+        $this->audit->logChange($actor, 'consolidation_run_completed', 'consolidation_run', $runId, null, ['period_id' => $period->id], $request, null, $period->id);
+
+        $recipients = array_unique(array_merge(
+            $this->notifications->userIdsForRole(Role::GROUP_ADMIN),
+            $this->notifications->userIdsForRole(Role::CONSOLIDATION_MANAGER),
+            $this->notifications->userIdsForRole(Role::CFO_READONLY)
+        ));
+        foreach ($recipients as $userId) {
+            $this->notifications->create(
+                $userId,
+                'consolidation_ready',
+                "Consolidation de {$period->label} terminée — résultats disponibles.",
+                'consolidation_run',
+                $runId
+            );
+        }
 
         return [true, $runId, null];
     }

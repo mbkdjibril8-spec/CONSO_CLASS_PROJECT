@@ -55,7 +55,9 @@ class AuditService
         ?int $entityId,
         ?array $oldValue,
         ?array $newValue,
-        Request $request
+        Request $request,
+        ?int $subsidiaryId = null,
+        ?int $periodId = null
     ): void {
         $this->repository->log(
             $user->id,
@@ -64,7 +66,9 @@ class AuditService
             $entityId,
             $oldValue !== null ? json_encode($oldValue, JSON_UNESCAPED_UNICODE) : null,
             $newValue !== null ? json_encode($newValue, JSON_UNESCAPED_UNICODE) : null,
-            $request->ip()
+            $request->ip(),
+            $subsidiaryId,
+            $periodId
         );
     }
 }

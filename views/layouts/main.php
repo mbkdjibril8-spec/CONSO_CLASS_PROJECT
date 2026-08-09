@@ -5,10 +5,12 @@
  */
 
 use App\Core\Session;
+use App\Repositories\NotificationRepository;
 
 $user = Session::get('user');
 $flashes = Session::pullFlashes();
 $currentPath = $_SERVER['REQUEST_URI'] ?? '';
+$unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user->id) : 0;
 ?>
 <!doctype html>
 <html lang="fr">
@@ -24,6 +26,10 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
         <div class="brand">GROUPFIN <span>· NOVA AFRICA GROUP</span></div>
         <div class="session-info">
             <?php if ($user): ?>
+                <a href="<?= h(base_url('notifications')) ?>" class="topbar-notif" title="Notifications">
+                    &#128276;
+                    <?php if ($unreadNotifications > 0): ?><span class="topbar-notif-badge"><?= $unreadNotifications > 9 ? '9+' : $unreadNotifications ?></span><?php endif; ?>
+                </a>
                 <span><?= h($user->name) ?> — <?= h(role_label($user->roleCode)) ?></span>
                 <form method="post" action="<?= h(base_url('logout')) ?>">
                     <?= csrf_field() ?>
@@ -47,6 +53,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
                 <?php $navLink('subsidiaries/tree', 'Hiérarchie'); ?>
                 <?php $navLink('exchange-rates', 'Taux de change'); ?>
                 <?php $navLink('consolidation', 'Consolidation'); ?>
+                <?php $navLink('audit', "Journal d'audit"); ?>
             <?php elseif ($user->subsidiaryId): ?>
                 <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>
             <?php endif; ?>

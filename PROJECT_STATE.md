@@ -1,9 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 6 — Budget vs Actual + dashboards : TERMINÉE ✅**
-**Ajustement UX/OHADA post-Phase 6 : TERMINÉ ✅** (voir section dédiée ci-dessous)
-Prochaine étape : Phase 7 — Notifications, audit, exports.
+**Phase 7 — Notifications, audit, exports : TERMINÉE ✅**
+Prochaine étape : Phase 8 — Tests, documentation, packaging.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -141,17 +140,40 @@ Toutes vérifiées en conditions réelles (HTTP via curl) :
 - Transitions/micro-interactions ajoutées (boutons, liens, lignes de tableau, champs) pour une sensation plus réactive, cohérent avec la demande explicite "plateforme dynamique, pas statique".
 - Reporté (hors scope de cet ajustement, à traiter plus tard si besoin) : plus de visuels sur les écrans hors dashboard (fiche filiale, workflow), relooking approfondi au-delà de la palette.
 
+## Phase 7 — Réalisé
+- Table `audit_logs` étendue avec `subsidiary_id`/`period_id` (FK `ON DELETE SET NULL` + index) : les actions journalisées (workflow, intercompany, filiales, périodes, taux, ajustements, runs) n'étaient rattachables qu'à `entity_type`/`entity_id`, hétérogènes selon l'action — insuffisant pour un filtre fiable par filiale/période dans le visualiseur d'audit. `AuditService::logChange()`/`AuditLogRepository::log()` acceptent désormais ces deux colonnes en paramètres optionnels ; tous les points d'appel (Workflow, Intercompany, Subsidiary, Period, ExchangeRate, Consolidation) les renseignent.
+- Centre de notifications : `NotificationRepository` (compteur non-lues, liste, marquer lu/tout lire), écran `/notifications`, badge cloche dans la topbar (mis à jour à chaque chargement de page, aucune valeur en dur). Nouvel évènement `consolidation_ready` créé à la fin d'un run réussi, adressé aux rôles Administrateur groupe / Responsable consolidation / DAF (lecture seule).
+- Visualiseur du journal d'audit (`/audit`, rôles groupe uniquement) : filtres utilisateur/filiale/période combinables, rendu AJAX (`data-ajax-filter`, cohérent avec le reste de la plateforme), affichage ancienne/nouvelle valeur par entrée.
+- Exports CSV (`ExportController`) : run de consolidation (`/exports/consolidation/{id}`), paquet filiale (`/exports/financial-data/{subsidiaryId}/{periodId}`, protégé par `subsidiaryScope`), vue dashboard courante (`/exports/dashboard`, respecte les filtres période/filiale/pays actifs). Format Excel FR : séparateur `;`, BOM UTF-8 (`stream_csv_download()` dans `app/helpers/helpers.php`) — CSV retenu plutôt que XLSX (pas de dépendance Composer/PhpSpreadsheet, cohérent avec la contrainte "zéro dépendance" du cahier des charges ; un tableur FR ouvre un CSV `;`+BOM sans réglage manuel).
+- Boutons d'export ajoutés aux écrans concernés (détail run de consolidation, saisie filiale, dashboard) sans dupliquer la logique de filtrage déjà présente dans chaque contrôleur.
+
+## Vérifications exécutées (DoD Phase 7)
+Toutes vérifiées en conditions réelles (HTTP via curl) :
+- Notifications : soumission Sénégal + mismatch interco → 2 notifications non lues pour le contrôleur concerné, badge topbar à jour ; "Tout marquer comme lu" → badge à 0, entrées grisées.
+- Run de consolidation complet → notification `consolidation_ready` reçue par les 3 rôles groupe (Administrateur, Responsable consolidation, DAF lecture seule), aucune pour les rôles filiale.
+- Audit : filtre par filiale (Sénégal, id=2) → uniquement les entrées liées à cette filiale (2 résultats sur le jeu de test) ; accès `/audit` par un Préparateur/Contrôleur → 403.
+- Export dashboard (`/exports/dashboard?period_id=12`) : CSV `;`+BOM, valeurs identiques au dashboard affiché (EBITDA 198 750 149,75 XOF).
+- Export paquet filiale (`/exports/financial-data/2/12`) : 22 comptes, codes/libellés/montants exacts.
+- Export run de consolidation (`/exports/consolidation/1`) : lignes conformes à `consolidation_line_items`, libellés de comptes corrects.
+- Base de démonstration remise à l'état de départ après les tests (5/6 filiales soumises, Maroc en brouillon, mismatch Sénégal/France déclaré, aucun run de consolidation) via rejeu complet `schema.sql` + `seed.sql` + les 3 scripts `seed_*.php`.
+- `php -l` sur l'intégralité de `app/ public/ views/ database/` : aucune erreur de syntaxe.
+
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).
 - Répertoires `app/controllers`, `app/models`, etc. restent en minuscules (conformes à l'arborescence du cahier des charges) ; les classes utilisent des namespaces `App\Controllers`, `App\Models`... en PascalCase — l'autoloader fait la conversion de casse.
 - UI entièrement en français (cohérent avec README/manuel utilisateur en français et le contexte du groupe ouest-africain).
 - Table `accounts` (plan de comptes) créée par le schéma mais volontairement vide à ce stade : sera peuplée en Phase 3 avec la conception des formulaires de saisie IS/BS/CF.
+- **Les 12 périodes 2026 démarrent `in_progress` plutôt que janvier-novembre `closed`** (retour utilisateur du 2026-08-09) : permet de tester le cycle de workflow complet (saisie → soumission → validation) sur n'importe quel mois de démonstration, pas seulement décembre. Le cycle de vie des périodes lui-même (Phase 2, `PeriodService`, transitions séquentielles strictes) n'est pas modifié — reste testable via l'écran Périodes.
 
 ## Cuts / V2 backlog
 - Hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.
 - **Productisation / revente à d'autres entreprises (discuté 2026-08-08, décision utilisateur : traiter après la fin du V1)** : l'architecture est déjà single-tenant/réutilisable (une base = un groupe), mais deux choses restent codées en dur pour NOVA AFRICA GROUP : (1) le nom du groupe dans `views/layouts/main.php` et `views/auth/login.php` (à sortir vers `config.php`, ~30 min) ; (2) le plan de comptes est référencé par code (`REV`, `COGS`...) dans `ValidationService` — un nouveau client peut renommer les libellés mais pas changer la structure sans toucher au code. Modèle retenu pour la revente : une installation (base + config) par client, pas de multi-tenant (rejeté : chantier de plusieurs semaines, risque sécurité de fuite de données entre clients pour un bénéfice non demandé).
+- **UX "dynamisme" approfondi (demandé 2026-08-09, à traiter après la Phase 8)** : boutons "retour à l'onglet/page précédente" et autres micro-interactions de navigation au-delà des filtres AJAX déjà livrés (dashboard, Budget vs Actual, taux de change, intercompany, ajustements). L'utilisateur a explicitement choisi de terminer le cahier des charges (Phases 7-8) avant de revenir sur ce point — ne pas l'entamer avant.
 
-## Prochaines étapes (Phase 7)
-- Centre de notifications (badge non-lues, liste, marquer comme lu) — les évènements sont déjà créés en base depuis la Phase 4 (soumission, rejet, mismatch) ; ajouter l'évènement `consolidation_ready`.
-- Visualiseur du journal d'audit (`audit_logs`) avec filtres par utilisateur/filiale/période.
-- Exports Excel/CSV : états consolidés, paquets filiale, vue dashboard courante.
+## Prochaines étapes (Phase 8)
+- Suite de tests (couverture des services critiques : `ValidationService`, `WorkflowService`, `ConsolidationService`, conversion devises).
+- `README.md` (français) : installation, démarrage, structure du projet.
+- `USER_MANUAL.md` (français) : guide utilisateur par rôle.
+- `TECHNICAL_DOCUMENTATION.md` : architecture, choix techniques.
+- Relecture finale de `docs/CONSOLIDATION_LOGIC.md`.
+- Vérification finale `.gitignore`, packaging `GROUPFIN.zip`.

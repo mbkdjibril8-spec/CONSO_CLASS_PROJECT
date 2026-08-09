@@ -107,7 +107,7 @@ class SubsidiaryService
     {
         $data = $this->normalize($input);
         $id = $this->subsidiaries->create($data);
-        $this->audit->logChange($actor, 'create', 'subsidiary', $id, null, $data, $request);
+        $this->audit->logChange($actor, 'create', 'subsidiary', $id, null, $data, $request, $id);
         return $id;
     }
 
@@ -116,7 +116,7 @@ class SubsidiaryService
         $before = $this->subsidiaries->findById($id);
         $data = $this->normalize($input);
         $this->subsidiaries->update($id, $data);
-        $this->audit->logChange($actor, 'update', 'subsidiary', $id, (array) $before, $data, $request);
+        $this->audit->logChange($actor, 'update', 'subsidiary', $id, (array) $before, $data, $request, $id);
     }
 
     public function setActive(int $id, bool $active, User $actor, Request $request): void
@@ -129,7 +129,8 @@ class SubsidiaryService
             $id,
             ['is_active' => !$active],
             ['is_active' => $active],
-            $request
+            $request,
+            $id
         );
     }
 

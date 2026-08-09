@@ -71,7 +71,7 @@ class WorkflowService
         }
 
         $this->transitions->record($subsidiary->id, $period->id, $status, 'submitted', $actor->id);
-        $this->audit->logChange($actor, 'workflow_submit', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'submitted'], $request);
+        $this->audit->logChange($actor, 'workflow_submit', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'submitted'], $request, $subsidiary->id, $period->id);
 
         foreach ($this->notifications->userIdsForRole(Role::SUBSIDIARY_CONTROLLER, $subsidiary->id) as $userId) {
             $this->notifications->create(
@@ -95,7 +95,7 @@ class WorkflowService
         }
 
         $this->transitions->record($subsidiary->id, $period->id, $status, 'validated', $actor->id);
-        $this->audit->logChange($actor, 'workflow_validate', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'validated'], $request);
+        $this->audit->logChange($actor, 'workflow_validate', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'validated'], $request, $subsidiary->id, $period->id);
 
         return [true, null];
     }
@@ -114,7 +114,7 @@ class WorkflowService
         }
 
         $this->transitions->record($subsidiary->id, $period->id, $status, 'rejected', $actor->id, $reason);
-        $this->audit->logChange($actor, 'workflow_reject', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'rejected', 'reason' => $reason], $request);
+        $this->audit->logChange($actor, 'workflow_reject', 'financial_package', $subsidiary->id, ['status' => $status], ['status' => 'rejected', 'reason' => $reason], $request, $subsidiary->id, $period->id);
 
         foreach ($this->notifications->userIdsForRole(Role::PREPARER, $subsidiary->id) as $userId) {
             $this->notifications->create(

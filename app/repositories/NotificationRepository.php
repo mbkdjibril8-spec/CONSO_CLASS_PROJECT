@@ -31,4 +31,43 @@ class NotificationRepository
         $stmt->execute($params);
         return array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
     }
+
+    public function unreadCount(int $userId): int
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT COUNT(*) FROM notifications WHERE user_id = :uid AND is_read = 0'
+        );
+        $stmt->execute(['uid' => $userId]);
+        return (int) $stmt->fetchColumn();
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    public function forUser(int $userId, int $limit = 50): array
+    {
+        $stmt = Database::connection()->prepare(
+            'SELECT * FROM notifications WHERE user_id = :uid ORDER BY created_at DESC, id DESC LIMIT :limit'
+        );
+        $stmt->bindValue('uid', $userId, \PDO::PARAM_INT);
+        $stmt->bindValue('limit', $limit, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /** Marque une notification comme lue ; retourne false si elle n'appartient pas à l'utilisateur. */
+    public function markRead(int $id, int $userId): bool
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE id = :id AND user_id = :uid'
+        );
+        $stmt->execute(['id' => $id, 'uid' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    public function markAllRead(int $userId): void
+    {
+        $stmt = Database::connection()->prepare(
+            'UPDATE notifications SET is_read = 1 WHERE user_id = :uid AND is_read = 0'
+        );
+        $stmt->execute(['uid' => $userId]);
+    }
 }

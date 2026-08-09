@@ -187,7 +187,7 @@ class ConsolidationController extends Controller
         (new AuditService())->logChange(
             $actor, 'consolidation_adjustment_create', 'consolidation_adjustment', $id,
             null, ['period_id' => $periodId, 'account_id' => $accountId, 'debit_credit' => $debitCredit, 'amount' => $amount, 'reason' => $reason],
-            $request
+            $request, $subsidiaryId, $periodId
         );
 
         Session::flash('success', 'Ajustement enregistré. Relancez la consolidation de cette période pour le prendre en compte.');

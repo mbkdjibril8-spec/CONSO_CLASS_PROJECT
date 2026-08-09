@@ -81,7 +81,7 @@ class IntercompanyService
         $this->audit->logChange($actor, 'intercompany_declare', 'intercompany_transaction', $id, null, [
             'subsidiary_id' => $subsidiaryId, 'counterparty_subsidiary_id' => $counterpartySubsidiaryId,
             'type' => $type, 'amount_local' => $amountLocal, 'amount_group' => $amountGroup,
-        ], $request);
+        ], $request, $subsidiaryId, $periodId);
 
         if ($type === 'dividend') {
             // Déclaration à sens unique : considérée rapprochée dès la saisie (voir CONSOLIDATION_LOGIC.md).

@@ -64,6 +64,16 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
             </div>
         <?php endif; ?>
     </form>
+    <?php if (isset($kpis)): ?>
+        <?php
+        $exportParams = ['period_id' => $period->id];
+        if ($user->isGroupLevel()) {
+            if ($subsidiaryFilter !== '') { $exportParams['subsidiary_id'] = $subsidiaryFilter; }
+            if ($countryFilter !== '') { $exportParams['country'] = $countryFilter; }
+        }
+        ?>
+        <a href="<?= h(base_url('exports/dashboard?' . http_build_query($exportParams))) ?>" class="btn btn-outline" style="margin-top:12px;display:inline-block">Exporter cette vue (CSV)</a>
+    <?php endif; ?>
 </div>
 
 <?php if ($user->isGroupLevel() && !empty($alerts)): ?>

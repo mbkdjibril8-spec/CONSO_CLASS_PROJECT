@@ -47,7 +47,9 @@ class ExchangeRateService
             $period->id,
             $before,
             $ratesByCurrency,
-            $request
+            $request,
+            null,
+            $period->id
         );
     }
 }

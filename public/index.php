@@ -35,13 +35,16 @@ ini_set('display_errors', $config['app']['debug'] ? '1' : '0');
 use App\Core\Request;
 use App\Core\Router;
 use App\Core\Session;
+use App\Controllers\AuditController;
 use App\Controllers\AuthController;
 use App\Controllers\BudgetController;
 use App\Controllers\ConsolidationController;
 use App\Controllers\DashboardController;
 use App\Controllers\ExchangeRateController;
+use App\Controllers\ExportController;
 use App\Controllers\FinancialDataController;
 use App\Controllers\IntercompanyController;
+use App\Controllers\NotificationController;
 use App\Controllers\PeriodController;
 use App\Controllers\SubsidiaryController;
 use App\Controllers\WorkflowController;
@@ -136,6 +139,19 @@ $router->post('/consolidation/run', [ConsolidationController::class, 'run'], [$a
 $router->get('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsIndex'], [$auth, $groupRoles]);
 $router->post('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsStore'], [$auth, $periodManagers, $csrf]);
 $router->get('/consolidation/{id}', [ConsolidationController::class, 'show'], [$auth, $groupRoles]);
+
+// --- Notifications -------------------------------------------------------------
+$router->get('/notifications', [NotificationController::class, 'index'], [$auth]);
+$router->post('/notifications/read-all', [NotificationController::class, 'markAllRead'], [$auth, $csrf]);
+$router->post('/notifications/{id}/read', [NotificationController::class, 'markRead'], [$auth, $csrf]);
+
+// --- Journal d'audit -------------------------------------------------------------
+$router->get('/audit', [AuditController::class, 'index'], [$auth, $groupRoles]);
+
+// --- Exports (Excel/CSV) ---------------------------------------------------------
+$router->get('/exports/dashboard', [ExportController::class, 'dashboard'], [$auth, $allRoles]);
+$router->get('/exports/consolidation/{id}', [ExportController::class, 'consolidationRun'], [$auth, $groupRoles]);
+$router->get('/exports/financial-data/{subsidiaryId}/{periodId}', [ExportController::class, 'subsidiaryPackage'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
 
 $request = new Request();
 $router->dispatch($request);

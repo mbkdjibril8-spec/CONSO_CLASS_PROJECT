@@ -350,18 +350,27 @@ CREATE TABLE notifications (
 
 -- Journal d'audit : toute modification de donnée financière et tout changement
 -- de statut doit y être tracé (utilisateur, ancienne/nouvelle valeur, horodatage).
+-- subsidiary_id/period_id sont dénormalisés (redondants avec entity_id selon les
+-- cas) spécifiquement pour permettre le filtrage du visualiseur d'audit (Phase 7)
+-- sans avoir à interpréter entity_type au cas par cas à chaque requête.
 CREATE TABLE audit_logs (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id INT UNSIGNED NULL,
     action VARCHAR(60) NOT NULL,           -- ex: login, login_failed, unauthorized_access, data_update...
     entity_type VARCHAR(60) NOT NULL,
     entity_id INT UNSIGNED NULL,
+    subsidiary_id INT UNSIGNED NULL,
+    period_id INT UNSIGNED NULL,
     old_value TEXT NULL,
     new_value TEXT NULL,
     ip_address VARCHAR(45) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_audit_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    CONSTRAINT fk_audit_subsidiary FOREIGN KEY (subsidiary_id) REFERENCES subsidiaries(id) ON DELETE SET NULL,
+    CONSTRAINT fk_audit_period FOREIGN KEY (period_id) REFERENCES reporting_periods(id) ON DELETE SET NULL,
     INDEX idx_audit_user (user_id),
     INDEX idx_audit_entity (entity_type, entity_id),
+    INDEX idx_audit_subsidiary (subsidiary_id),
+    INDEX idx_audit_period (period_id),
     INDEX idx_audit_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

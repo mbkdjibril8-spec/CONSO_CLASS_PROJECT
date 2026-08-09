@@ -19,6 +19,9 @@ $val = fn (string $code) => $lineItems[$code] ?? 0.0;
             Lancé par <?= h($run['started_by_name']) ?> le <?= h(format_date($run['started_at'])) ?>
         </div>
     </div>
+    <?php if ($run['status'] === 'completed'): ?>
+        <a href="<?= h(base_url('exports/consolidation/' . $run['id'])) ?>" class="btn btn-outline">Exporter (CSV)</a>
+    <?php endif; ?>
 </div>
 
 <div class="panel">

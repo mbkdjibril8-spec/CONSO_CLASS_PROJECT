@@ -336,3 +336,47 @@ au centime près sans jamais toucher au résultat net affiché. Sur une
 filiale mono-devise sans mise en équivalence, ce résidu ne capture que le
 bruit d'arrondi `DECIMAL(18,2)` déjà documenté plus haut (jusqu'à
 quelques centimes) — même mécanisme, contexte différent.
+
+## Traçabilité, notifications et exports (Phase 7)
+
+### `audit_logs` rattaché à filiale/période
+Avant la Phase 7, une entrée d'audit n'était identifiable que par
+`entity_type`/`entity_id`, dont la signification change selon l'action
+(id d'un ajustement, d'une filiale, d'un run...) — impossible à filtrer
+de façon fiable par filiale ou période sans réinterpréter chaque type
+d'entité. Ajout de deux colonnes directes `subsidiary_id`/`period_id`
+(nullables, `ON DELETE SET NULL` pour ne jamais perdre l'historique si
+une filiale est désactivée), renseignées à la source par chaque service
+métier qui journalise déjà l'action (Workflow, Intercompany, Subsidiary,
+Period, ExchangeRate, Consolidation). Dénormalisation assumée : ces deux
+colonnes dupliquent une information parfois déjà déductible de
+`entity_type`/`entity_id`, mais le coût (2 colonnes + 2 index) est
+minime face au bénéfice (un seul `WHERE` simple dans
+`AuditLogRepository::filtered()` au lieu d'un cas par type d'entité).
+
+### Notifications : évènement `consolidation_ready`
+Les évènements `submission`/`rejection`/`mismatch` existaient déjà en
+base depuis la Phase 4 (créés par `WorkflowService`/`IntercompanyService`)
+mais n'avaient pas encore d'écran de consultation. Phase 7 ajoute cet
+écran (`/notifications`, badge topbar) et un 4ᵉ évènement,
+`consolidation_ready`, déclenché par `ConsolidationService` à la toute
+fin d'un run **réussi** (après la dernière étape du pipeline, jamais en
+cas d'échec — un run `failed` ne notifie personne, il reste visible sur
+l'écran de détail du run pour l'utilisateur qui l'a lancé). Destinataires :
+tous les utilisateurs des rôles `group_admin`, `consolidation_manager`,
+`cfo_readonly` — les seuls rôles qui consultent les résultats consolidés
+(un préparateur/contrôleur filiale n'a pas d'usage direct de cette
+notification).
+
+### Exports CSV plutôt que XLSX
+Le cahier des charges évoque des exports "Excel/CSV". CSV a été retenu
+seul (pas de génération `.xlsx`) pour rester cohérent avec la contrainte
+explicite "zéro dépendance Composer" du projet : générer un vrai `.xlsx`
+nécessite une bibliothèque (PhpSpreadsheet ou équivalent) ; un CSV
+`;`-délimité avec BOM UTF-8 s'ouvre nativement dans Excel FR (virgule
+déjà utilisée comme séparateur décimal, d'où le choix de `;`) sans
+réglage d'import manuel, pour un coût d'implémentation nul. Le format
+est centralisé dans `stream_csv_download()` (`app/helpers/helpers.php`)
+pour garantir que les 3 exports (run de consolidation, paquet filiale,
+vue dashboard) produisent un fichier identique en convention, même si
+leurs colonnes diffèrent.

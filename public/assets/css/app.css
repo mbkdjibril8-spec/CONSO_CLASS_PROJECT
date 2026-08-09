@@ -112,6 +112,35 @@ p { margin: 0 0 .75em 0; }
 
 .app-topbar form { margin: 0; }
 
+.topbar-notif {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: .95rem;
+  color: #e6e1d4;
+  transition: background .12s ease;
+}
+.topbar-notif:hover { background: rgba(255,255,255,.08); text-decoration: none; }
+.topbar-notif-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: .62rem;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 4px;
+  border-radius: 100px;
+  min-width: 15px;
+  text-align: center;
+  border: 2px solid var(--color-graphite);
+}
+
 .btn-logout {
   background: transparent;
   border: 1px solid #5a4d3f;

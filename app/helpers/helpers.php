@@ -13,6 +13,26 @@ function h(?string $value): string
     return htmlspecialchars($value ?? '', ENT_QUOTES, 'UTF-8');
 }
 
+/**
+ * Envoie un tableau de lignes en téléchargement CSV (BOM UTF-8 pour un
+ * import correct des accents dans Excel) et termine la requête. §2.14.
+ * @param array<int, array<int, string|int|float|null>> $rows première ligne = en-têtes
+ */
+function stream_csv_download(string $filename, array $rows): void
+{
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="' . $filename . '"');
+    header('Cache-Control: no-store');
+
+    $out = fopen('php://output', 'w');
+    fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8
+    foreach ($rows as $row) {
+        fputcsv($out, $row, ';');
+    }
+    fclose($out);
+    exit;
+}
+
 function config_value(string $dotted, $default = null)
 {
     static $config = null;
@@ -117,6 +137,29 @@ function consolidation_method_badge_class(string $method): string
 }
 
 /** Libellés français des statuts de workflow d'un paquet filiale/période. */
+/** Libellés/badges français des types de notification. */
+function notification_type_label(string $type): string
+{
+    $labels = [
+        'submission' => 'Soumission',
+        'rejection' => 'Rejet',
+        'mismatch' => 'Écart intercompany',
+        'consolidation_ready' => 'Consolidation prête',
+    ];
+    return $labels[$type] ?? $type;
+}
+
+function notification_type_badge_class(string $type): string
+{
+    $classes = [
+        'submission' => 'badge-info',
+        'rejection' => 'badge-negative',
+        'mismatch' => 'badge-warning',
+        'consolidation_ready' => 'badge-positive',
+    ];
+    return $classes[$type] ?? 'badge-neutral';
+}
+
 function workflow_status_label(string $status): string
 {
     $labels = [

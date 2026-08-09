@@ -47,7 +47,9 @@ class PeriodService
             $period->id,
             ['status' => $period->status],
             ['status' => $expected],
-            $request
+            $request,
+            null,
+            $period->id
         );
     }
 }

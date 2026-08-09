@@ -49,4 +49,16 @@ class UserRepository
         $stmt = Database::connection()->query('SELECT COUNT(*) FROM users WHERE is_active = 1');
         return (int) $stmt->fetchColumn();
     }
+
+    /** @return User[] */
+    public function all(): array
+    {
+        $stmt = Database::connection()->query(
+            'SELECT u.*, r.code AS role_code
+             FROM users u
+             JOIN roles r ON r.id = u.role_id
+             ORDER BY u.name'
+        );
+        return array_map(fn ($row) => User::fromRow($row), $stmt->fetchAll());
+    }
 }
