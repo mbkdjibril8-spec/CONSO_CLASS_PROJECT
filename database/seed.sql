@@ -1,5 +1,5 @@
 -- =====================================================================
--- GROUPFIN — Données de démonstration : NOVA AFRICA GROUP
+-- OHADA_CONSO+ — Données de démonstration : NOVA AFRICA GROUP
 -- Ce fichier est complété phase après phase (voir PROJECT_STATE.md).
 -- Phase 1 : référentiels + structure de groupe + utilisateurs + périodes
 --           + taux de change. Les données financières (Phase 3+),

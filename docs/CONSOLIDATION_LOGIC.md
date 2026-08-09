@@ -1,4 +1,4 @@
-# CONSOLIDATION_LOGIC — GROUPFIN
+# CONSOLIDATION_LOGIC — OHADA_CONSO+
 
 Ce document consigne les choix de traitement comptable retenus lorsque
 plusieurs approches étaient défendables (règle §8.5 du cahier des charges).
@@ -304,7 +304,7 @@ consolidé) peuvent s'afficher au format normalisé OHADA (codes REF,
 soldes intermédiaires de gestion — Marge commerciale, Valeur ajoutée,
 EBE, Résultat d'exploitation, Résultat financier, RAO, Résultat HAO,
 Résultat net). **Couche de présentation uniquement** (`app/helpers/ohada.php`) :
-le plan de comptes GROUPFIN (22 comptes, Phase 3) reste le moteur de
+le plan de comptes interne (22 comptes, Phase 3) reste le moteur de
 saisie/validation/consolidation — décision prise avec l'utilisateur pour
 ne pas rouvrir les Phases 3 à 6 déjà testées. Chaque ligne OHADA sans
 correspondance dans le plan simplifié affiche 0,00 (comme sur un état

@@ -1,4 +1,4 @@
-# GROUPFIN
+# OHADA_CONSO+
 
 Plateforme de consolidation financière et de reporting de groupe pour **NOVA AFRICA GROUP**, groupe ouest-africain fictif présent au Sénégal, en Côte d'Ivoire, au Mali, au Maroc, au Ghana et en France.
 

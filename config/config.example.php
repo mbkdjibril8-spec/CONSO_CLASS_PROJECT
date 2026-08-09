@@ -1,12 +1,12 @@
 <?php
 /**
- * Modèle de configuration GROUPFIN.
+ * Modèle de configuration OHADA_CONSO+.
  * Copier ce fichier en "config.php" (à la racine de config/) et adapter
  * les valeurs à l'environnement local. config.php ne doit JAMAIS être versionné.
  */
 return [
     'app' => [
-        'name'      => 'GROUPFIN',
+        'name'      => 'OHADA_CONSO+',
         'env'       => 'local',
         // Chemin de base de l'application tel qu'exposé par Apache (XAMPP).
         // Exemple par défaut pour une installation dans C:\xampp\htdocs\groupfin

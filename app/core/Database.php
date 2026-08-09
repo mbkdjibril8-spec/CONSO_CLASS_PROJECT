@@ -35,7 +35,7 @@ class Database
                 ]);
             } catch (PDOException $e) {
                 // On ne fuite jamais les détails de connexion au client.
-                error_log('[GROUPFIN][DB] ' . $e->getMessage());
+                error_log('[OHADA_CONSO+][DB] ' . $e->getMessage());
                 http_response_code(500);
                 die('Erreur de connexion à la base de données. Vérifiez config/config.php.');
             }

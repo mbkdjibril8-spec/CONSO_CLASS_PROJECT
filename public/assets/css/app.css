@@ -1,5 +1,5 @@
 /* =====================================================================
-   GROUPFIN — Système de design
+   OHADA_CONSO+ — Système de design
    Plateforme de reporting financier de groupe : sobriété, densité,
    hiérarchie. Aucune décoration gratuite (pas de dégradés, pas de glass).
    ===================================================================== */
@@ -23,7 +23,7 @@
   --color-network: #ff9142;
   --color-network-dim: #2a7f8f;
 
-  /* Marque — orange (accent) + vert (identité GROUPFIN) */
+  /* Marque — orange (accent) + vert (identité OHADA_CONSO+) */
   --color-primary: #c15a1e;
   --color-primary-hover: #a34a17;
   --color-primary-bg: #fbeadf;
@@ -216,9 +216,21 @@ p { margin: 0 0 .75em 0; }
   font-weight: 600;
 }
 
-.kpi-row { display: flex; gap: 16px; flex-wrap: wrap; }
+/* flex 1 1 (grow=1) + pas de max-width faisait gonfler les cartes d'une
+   rangée à 2 cartes bien plus large que celles d'une rangée à 4 cartes
+   (chacune se partageant toute la largeur du panneau) — rangées visuellement
+   incohérentes entre elles. max-width fixe une taille de carte constante
+   quel que soit le nombre de cartes dans la rangée ; flex-direction:column
+   + margin-top:auto sur .kpi-sub ancre la valeur en haut et la ligne d'écart
+   (si présente) en bas, pour qu'une carte sans kpi-sub ne semble pas juste
+   "tronquée" à côté d'une carte qui en a un. */
+.kpi-row { display: flex; gap: 16px; flex-wrap: wrap; align-items: stretch; }
 .kpi {
-  flex: 1 1 160px;
+  flex: 1 1 200px;
+  max-width: 260px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -226,7 +238,7 @@ p { margin: 0 0 .75em 0; }
 }
 .kpi .kpi-label { font-size: .75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
 .kpi .kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--color-graphite); margin-top: 4px; font-variant-numeric: normal; }
-.kpi .kpi-sub { font-size: .78rem; margin-top: 6px; color: var(--color-text-muted); }
+.kpi .kpi-sub { font-size: .78rem; margin-top: auto; padding-top: 6px; color: var(--color-text-muted); }
 .kpi .kpi-delta { font-weight: 600; }
 .kpi .kpi-delta.is-favorable { color: var(--color-positive); }
 .kpi .kpi-delta.is-unfavorable { color: var(--color-negative); }
@@ -260,6 +272,36 @@ p { margin: 0 0 .75em 0; }
 .chart-tooltip-title { font-weight: 700; margin-bottom: 4px; color: #fff; }
 .chart-tooltip-row { display: flex; justify-content: space-between; gap: 14px; color: #cfd3d8; }
 .chart-tooltip-row strong { color: #fff; font-variant-numeric: tabular-nums; }
+
+/* --------------------------------------------------------------------
+   Donut de répartition (dynamique, bascule CA/EBITDA sans rechargement)
+   -------------------------------------------------------------------- */
+
+.donut-toggle { display: inline-flex; gap: 6px; margin-bottom: 14px; background: var(--color-surface-alt); border: 1px solid var(--color-border); border-radius: 999px; padding: 3px; }
+.donut-toggle-btn {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.donut-toggle-btn:hover { color: var(--color-text); }
+.donut-toggle-btn.is-active { background: var(--color-primary); color: #fff; }
+
+.donut-body { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
+.donut-svg { width: 240px; height: 240px; flex: 0 0 240px; overflow: visible; }
+.donut-slice { cursor: pointer; transition: opacity .12s ease; }
+
+.donut-legend { flex: 1 1 220px; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+.donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--color-text); }
+.donut-legend-item.is-excluded { opacity: .55; }
+.donut-legend-swatch { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 11px; }
+.donut-legend-name { font-weight: 600; min-width: 62px; }
+.donut-legend-value { color: var(--color-text-muted); font-variant-numeric: tabular-nums; margin-left: auto; }
 
 /* --------------------------------------------------------------------
    Alertes du dashboard CODIR
@@ -572,4 +614,111 @@ td.num, th.num { text-align: right; }
   .kpi-row { break-inside: avoid; }
   a[href]::after { content: ""; }
 }
+
+/* --------------------------------------------------------------------
+   Hiérarchie de groupe — org-chart visuel (boîtes + connecteurs), repli/
+   dépli dynamique. Pattern CSS classique "family tree" : chaque niveau
+   est un <ul> flex, les traits sont des pseudo-éléments sur les <li>
+   plutôt que des <svg> — se redispose automatiquement à n'importe quelle
+   profondeur/largeur sans recalcul JS.
+   -------------------------------------------------------------------- */
+
+.org-tree-scroll { overflow-x: auto; padding: 8px 4px 16px; }
+
+.org-tree, .org-level { list-style: none; margin: 0; padding: 0; display: flex; }
+.org-level { padding-top: 30px; position: relative; }
+.org-tree { padding-top: 0; }
+
+.org-node-wrap { flex: 1; text-align: center; position: relative; padding: 0 12px; }
+
+/* trait vertical du parent vers le niveau enfant */
+.org-level:not(.org-tree)::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 0;
+  height: 30px;
+  border-left: 2px solid var(--color-border-strong);
+}
+
+/* traits horizontaux entre frères, au-dessus de chaque nœud enfant */
+.org-node-wrap::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 50%;
+  width: 50%;
+  height: 30px;
+  border-top: 2px solid var(--color-border-strong);
+}
+.org-node-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 30px;
+  border-top: 2px solid var(--color-border-strong);
+  border-left: 2px solid var(--color-border-strong);
+}
+.org-node-wrap:first-child::before { border-top: none; }
+.org-node-wrap:last-child::after { border-top: none; border-left: none; }
+.org-node-wrap:only-child::before,
+.org-node-wrap:only-child::after { display: none; }
+.org-tree > .org-node-wrap::before,
+.org-tree > .org-node-wrap::after { display: none; }
+
+.org-node { position: relative; display: inline-block; min-width: 168px; }
+
+.org-node-link {
+  display: block;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.org-node-link:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,.08);
+  text-decoration: none;
+}
+.org-node.is-root .org-node-link { background: var(--color-graphite); border-color: var(--color-graphite); }
+.org-node.is-root .org-node-code,
+.org-node.is-root .org-node-name { color: #fff; }
+.org-node.is-root .text-faint { color: #9aa3ad; }
+
+.org-node-code { font-weight: 700; font-size: .9rem; letter-spacing: .02em; color: var(--color-graphite); }
+.org-node-name { font-size: .78rem; margin-top: 2px; color: var(--color-text-muted); }
+.org-node.is-root .org-node-name { color: #c7ccd2; }
+.org-node-meta { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.org-node-pct { font-size: .74rem; color: var(--color-text-faint); margin-top: 4px; }
+.org-node.is-root .org-node-pct { color: #9aa3ad; }
+
+.org-toggle {
+  position: absolute;
+  bottom: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font-size: .8rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 2;
+  transition: background .15s ease, color .15s ease;
+}
+.org-toggle:hover { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+.org-node-wrap.has-collapsed-children .org-toggle { background: var(--color-primary-bg); color: var(--color-primary); border-color: var(--color-primary); }
+
+.org-level.is-collapsed { display: none; }
 .ohada-total .ohada-value { color: var(--color-primary); }

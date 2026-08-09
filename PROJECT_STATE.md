@@ -1,10 +1,12 @@
-# PROJECT_STATE — GROUPFIN
+# PROJECT_STATE — OHADA_CONSO+
 
 ## Phase courante
 **Phase 8 — Tests, documentation, packaging : TERMINÉE ✅** (inclut la liasse groupe et le dashboard CODIR
 enrichi, ajoutés au périmètre à la demande de l'utilisateur le 2026-08-09).
-**GROUPFIN V1 est complet.** Prochaines étapes : voir "Cuts / V2 backlog" ci-dessous (productisation multi-client,
+**OHADA_CONSO+ V1 est complet.** Prochaines étapes : voir "Cuts / V2 backlog" ci-dessous (productisation multi-client,
 dynamisme approfondi) — explicitement reportées après V1 par décision utilisateur.
+**Ajustement post-Phase 8 (2026-08-09) : TERMINÉ ✅** — renommage GROUPFIN → OHADA_CONSO+, correctifs UX dashboard,
+arbre de hiérarchie dynamique (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -208,6 +210,45 @@ déploiement) — les trois en français. `docs/CONSOLIDATION_LOGIC.md` relu et 
 - Base de démonstration remise à l'état de départ après tous les tests (5/6 filiales soumises, Maroc en
   brouillon, mismatch Sénégal/France déclaré, aucun run de consolidation).
 - Dépôt Git initialisé et poussé sur `https://github.com/mbkdjibril8-spec/CONSO_CLASS_PROJECT` (branche `main`).
+
+## Ajustement post-Phase 8 (retour utilisateur détaillé, 2026-08-09)
+
+### Renommage GROUPFIN → OHADA_CONSO+
+Décision utilisateur : renommer uniquement le **nom affiché** (UI, `<title>`, README, docs, `config.app.name`)
+— le dossier local (`C:\xampp\htdocs\groupfin`), le nom de la base de données (`groupfin`), le cookie de
+session (`groupfin_session`) et le dépôt GitHub (`CONSO_CLASS_PROJECT`) restent inchangés pour ne pas casser
+l'installation XAMPP ni le lien GitHub existant. Deux commentaires de code ("plan de comptes GROUPFIN") ont été
+reformulés en "plan de comptes interne" plutôt que remplacés littéralement par le nouveau nom, pour éviter la
+confusion visuelle "plan de comptes OHADA_CONSO+" juxtaposé à "format OHADA/SYCEBNL" dans la même phrase.
+
+### Correctif UX : asymétrie des cartes KPI
+Cause : `.kpi { flex: 1 1 160px }` sans `max-width` faisait grandir les cartes pour remplir toute la largeur de
+leur rangée — une rangée à 2 cartes (ex. marges EBITDA/nette) produisait des cartes ~2x plus larges qu'une
+rangée à 4 cartes (ex. situation bilancielle), rendant le tableau de bord visuellement incohérent d'une rangée
+à l'autre. Corrigé : `max-width: 260px` fixe une taille de carte constante quel que soit le nombre de cartes
+par rangée. Deuxième cause, plus subtile : certaines cartes ont une 3ᵉ ligne (`.kpi-sub`, écart vs budget) et
+d'autres non — `flex-direction: column` + `margin-top: auto` sur `.kpi-sub` ancre systématiquement le libellé et
+la valeur en haut de la carte, pour qu'une carte sans écart ne paraisse pas juste "tronquée" à côté d'une carte
+qui en affiche un.
+
+### Donut de répartition dynamique (dashboard)
+Demande initiale : remplacer le graphique de tendance (courbes, 12 mois) par un "disk chart". Clarifié avec
+l'utilisateur : un donut ne peut pas représenter une évolution dans le temps (il montre une répartition à un
+instant donné) — décision retenue : **garder** la courbe de tendance et **ajouter** un donut de répartition
+CA/EBITDA par filiale pour la période sélectionnée, avec bascule dynamique entre les deux indicateurs (boutons,
+aucun rechargement de page). Réutilise directement `ReportingService::subsidiaryScorecard()` (même source que
+le tableau "Performance par filiale" — un seul calcul, jamais deux résultats potentiellement divergents pour la
+même donnée). Les valeurs négatives (filiale en perte sur l'indicateur affiché) ne sont pas représentables dans
+un donut (pas de part négative d'un tout) : exclues du tracé, listées séparément dans la légende avec la
+mention "non représenté" plutôt que silencieusement ignorées.
+
+### Arbre de hiérarchie dynamique
+L'ancienne vue (`/subsidiaries/tree`) était une liste à puces imbriquée avec des bordures gauche simulant un
+arbre. Remplacée par un org-chart visuel (boîtes reliées par des traits, motif CSS "family tree" classique :
+connecteurs en pseudo-éléments sur des `<li>` en flexbox, se redispose automatiquement à n'importe quelle
+profondeur/largeur sans recalcul JS) avec repli/dépli par filiale (clic sur le bouton rond sous chaque nœud,
+état purement client — pas persisté, pas nécessaire pour un usage de consultation). Même donnée qu'avant
+(`SubsidiaryService::tree()`), seule la présentation change.
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

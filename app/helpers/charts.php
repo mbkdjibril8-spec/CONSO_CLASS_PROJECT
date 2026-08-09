@@ -286,3 +286,159 @@ function render_contribution_chart(array $contribution): string
     </div>
     HTML;
 }
+
+/**
+ * Donut de répartition par filiale, avec bascule dynamique entre 2
+ * indicateurs (CA / EBITDA) sans rechargement de page — construit à partir
+ * du même scorecard que le tableau "Performance par filiale" (une seule
+ * source de calcul, voir ReportingService::subsidiaryScorecard()). Les
+ * valeurs négatives (filiale en perte) ne sont pas représentables dans un
+ * donut (pas de part négative d'un tout) : exclues du tracé, signalées
+ * dans la légende.
+ * @param array<int, array{subsidiary: \App\Models\Subsidiary, revenue: array, ebitda: array}> $scorecard
+ */
+function render_composition_donut(array $scorecard, string $chartId): string
+{
+    if (empty($scorecard)) {
+        return '<div class="empty-state">Aucune donnée pour cette sélection.</div>';
+    }
+
+    $build = function (string $key) use ($scorecard) {
+        $rows = [];
+        foreach ($scorecard as $row) {
+            $s = $row['subsidiary'];
+            $rows[] = [
+                'code' => $s->code,
+                'name' => $s->name,
+                'value' => round($row[$key]['actual'], 2),
+                'color' => chart_subsidiary_color($s->code),
+            ];
+        }
+        return $rows;
+    };
+
+    $datasets = [
+        'revenue' => ['label' => "Chiffre d'affaires", 'rows' => $build('revenue')],
+        'ebitda' => ['label' => 'EBITDA', 'rows' => $build('ebitda')],
+    ];
+    $dataJson = json_encode($datasets, JSON_UNESCAPED_UNICODE);
+
+    return <<<HTML
+    <div class="donut-wrap">
+        <div class="donut-toggle" role="group" aria-label="Indicateur affiché">
+            <button type="button" class="donut-toggle-btn is-active" data-key="revenue">Chiffre d'affaires</button>
+            <button type="button" class="donut-toggle-btn" data-key="ebitda">EBITDA</button>
+        </div>
+        <div class="donut-body">
+            <div class="chart-svg-container" style="position:relative">
+                <svg viewBox="0 0 240 240" id="{$chartId}" class="donut-svg"></svg>
+                <div class="chart-tooltip" style="display:none"></div>
+            </div>
+            <div class="donut-legend" id="{$chartId}-legend"></div>
+        </div>
+    </div>
+    <script>
+    (function() {
+        var data = {$dataJson};
+        var svg = document.getElementById('{$chartId}');
+        var legend = document.getElementById('{$chartId}-legend');
+        var tooltip = svg.parentElement.querySelector('.chart-tooltip');
+        var toggle = svg.closest('.donut-wrap').querySelector('.donut-toggle');
+        var cx = 120, cy = 120, rOuter = 96, rInner = 60;
+
+        function polar(r, angle) {
+            var rad = (angle - 90) * Math.PI / 180;
+            return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+        }
+        function arcPath(startAngle, endAngle) {
+            var so = polar(rOuter, endAngle), eo = polar(rOuter, startAngle);
+            var si = polar(rInner, endAngle), ei = polar(rInner, startAngle);
+            var large = (endAngle - startAngle) > 180 ? 1 : 0;
+            return ['M', so.x, so.y, 'A', rOuter, rOuter, 0, large, 0, eo.x, eo.y,
+                    'L', ei.x, ei.y, 'A', rInner, rInner, 0, large, 1, si.x, si.y, 'Z'].join(' ');
+        }
+        function fmtAmount(v) {
+            return v.toLocaleString('fr-FR', {maximumFractionDigits: 0});
+        }
+        function fmtCompact(v) {
+            var abs = Math.abs(v);
+            if (abs >= 1e9) return (v / 1e9).toLocaleString('fr-FR', {maximumFractionDigits: 1}) + ' Md';
+            if (abs >= 1e6) return (v / 1e6).toLocaleString('fr-FR', {maximumFractionDigits: 1}) + ' M';
+            if (abs >= 1e3) return (v / 1e3).toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' K';
+            return fmtAmount(v);
+        }
+
+        function draw(key) {
+            var rows = data[key].rows;
+            var positive = rows.filter(function(r) { return r.value > 0; });
+            var excluded = rows.filter(function(r) { return r.value <= 0; });
+            var total = positive.reduce(function(s, r) { return s + r.value; }, 0);
+
+            var svgParts = [];
+            var legendParts = [];
+            var angle = 0;
+
+            if (total <= 0) {
+                svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rOuter + '" fill="none" stroke="#e2ddd0" stroke-width="' + (rOuter - rInner) + '"/>');
+            } else {
+                positive.forEach(function(r, i) {
+                    var share = r.value / total;
+                    var start = angle, end = angle + share * 360;
+                    angle = end;
+                    svgParts.push('<path d="' + arcPath(start, end) + '" fill="' + r.color + '" class="donut-slice" data-idx="' + i + '" stroke="#fcfcfb" stroke-width="1.5"><title>' + r.name + ' : ' + fmtAmount(r.value) + ' XOF (' + (share * 100).toFixed(1) + '%)</title></path>');
+                });
+            }
+
+            svgParts.push('<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" font-size="19" font-weight="700" fill="#241f1a">' + fmtCompact(total) + '</text>');
+            svgParts.push('<text x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle" font-size="11" fill="#6b6156">' + data[key].label + '</text>');
+            svg.innerHTML = svgParts.join('');
+
+            positive.forEach(function(r) {
+                var share = total > 0 ? (r.value / total * 100) : 0;
+                legendParts.push('<div class="donut-legend-item"><span class="donut-legend-swatch" style="background:' + r.color + '"></span>' +
+                    '<span class="donut-legend-name">' + r.code + '</span>' +
+                    '<span class="donut-legend-value">' + fmtCompact(r.value) + ' &middot; ' + share.toFixed(1) + '%</span></div>');
+            });
+            excluded.forEach(function(r) {
+                legendParts.push('<div class="donut-legend-item is-excluded"><span class="donut-legend-swatch" style="background:' + r.color + '"></span>' +
+                    '<span class="donut-legend-name">' + r.code + '</span>' +
+                    '<span class="donut-legend-value">' + fmtCompact(r.value) + ' (non représenté)</span></div>');
+            });
+            legend.innerHTML = legendParts.join('');
+
+            svg.querySelectorAll('.donut-slice').forEach(function(el) {
+                el.addEventListener('mouseenter', function(evt) {
+                    var idx = parseInt(el.getAttribute('data-idx'), 10);
+                    var r = positive[idx];
+                    var share = total > 0 ? (r.value / total * 100) : 0;
+                    tooltip.innerHTML = '<div class="chart-tooltip-title">' + r.name + '</div>' +
+                        '<div class="chart-tooltip-row"><span>' + data[key].label + '</span><strong>' + fmtAmount(r.value) + '</strong></div>' +
+                        '<div class="chart-tooltip-row"><span>Part</span><strong>' + share.toFixed(1) + '%</strong></div>';
+                    tooltip.style.display = 'block';
+                    el.setAttribute('opacity', '.82');
+                });
+                el.addEventListener('mousemove', function(evt) {
+                    var rect = svg.parentElement.getBoundingClientRect();
+                    tooltip.style.left = Math.min(evt.clientX - rect.left + 12, rect.width - 190) + 'px';
+                    tooltip.style.top = Math.max(evt.clientY - rect.top - 40, 0) + 'px';
+                });
+                el.addEventListener('mouseleave', function() {
+                    tooltip.style.display = 'none';
+                    el.setAttribute('opacity', '1');
+                });
+            });
+        }
+
+        toggle.addEventListener('click', function(evt) {
+            var btn = evt.target.closest('.donut-toggle-btn');
+            if (!btn) { return; }
+            toggle.querySelectorAll('.donut-toggle-btn').forEach(function(b) { b.classList.remove('is-active'); });
+            btn.classList.add('is-active');
+            draw(btn.getAttribute('data-key'));
+        });
+
+        draw('revenue');
+    })();
+    </script>
+    HTML;
+}

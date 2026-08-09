@@ -3,7 +3,7 @@
 /**
  * Présentation des états financiers au format normalisé OHADA/SYCEBNL
  * (codes REF, soldes intermédiaires de gestion). Couche de PRÉSENTATION
- * uniquement : le plan de comptes GROUPFIN (22 comptes, Phase 3) reste le
+ * uniquement : le plan de comptes interne (22 comptes, Phase 3) reste le
  * moteur de saisie/validation/consolidation. Chaque ligne OHADA sans
  * correspondance dans le plan de comptes simplifié affiche 0,00 — comme
  * sur un état réel d'une société dont l'activité ne mouvemente pas cette
@@ -12,7 +12,7 @@
 
 /**
  * Calcule les valeurs des lignes OHADA du compte de résultat à partir des
- * montants du plan de comptes GROUPFIN (indexés par code : REV, COGS...).
+ * montants du plan de comptes interne (indexés par code : REV, COGS...).
  * @param array<string, float> $a
  * @return array<string, float>
  */
@@ -54,7 +54,7 @@ function ohada_income_statement_values(array $a): array
 
 /**
  * Calcule les valeurs des lignes OHADA du bilan (actif + passif) à partir
- * des montants du plan de comptes GROUPFIN et du résultat net (calculé,
+ * des montants du plan de comptes interne et du résultat net (calculé,
  * jamais stocké — cf. Phase 3).
  * @param array<string, float> $a
  * @return array<string, float>

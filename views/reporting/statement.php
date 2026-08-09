@@ -29,4 +29,4 @@
     </div>
 </div>
 
-<p class="text-faint">Présentation normalisée OHADA/SYCEBNL construite à partir du plan de comptes GROUPFIN (22 comptes) — les lignes sans correspondance affichent 0,00. Voir <code>docs/CONSOLIDATION_LOGIC.md</code>.</p>
+<p class="text-faint">Présentation normalisée OHADA/SYCEBNL construite à partir du plan de comptes interne (22 comptes) — les lignes sans correspondance affichent 0,00. Voir <code>docs/CONSOLIDATION_LOGIC.md</code>.</p>

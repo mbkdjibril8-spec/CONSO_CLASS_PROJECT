@@ -173,6 +173,13 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
 
 <?php if ($user->isGroupLevel()): ?>
 
+    <?php if (!empty($scorecard)): ?>
+        <div class="panel">
+            <div class="panel-title">Répartition par filiale — <?= h($period->label) ?></div>
+            <?= render_composition_donut($scorecard, 'donut-repartition') ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (!empty($contribution)): ?>
         <div class="panel">
             <div class="panel-title">Contribution EBITDA par filiale — <?= h($period->label) ?></div>

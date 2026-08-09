@@ -6,7 +6,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Connexion — GROUPFIN</title>
+    <title>Connexion — OHADA_CONSO+</title>
     <link rel="stylesheet" href="<?= h(asset('css/app.css')) ?>">
 </head>
 <body>
@@ -49,7 +49,7 @@
                 <circle cx="440" cy="210" r="2.5" opacity=".45"/>
             </g>
         </svg>
-        <div class="auth-wordmark">GROUPFIN<span class="dot">.</span> <span class="org">NOVA AFRICA GROUP</span></div>
+        <div class="auth-wordmark">OHADA_CONSO+<span class="dot">.</span> <span class="org">NOVA AFRICA GROUP</span></div>
 
         <div class="auth-brand-mid">
             <div class="eyebrow">Consolidation &amp; reporting de groupe</div>

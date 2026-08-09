@@ -1,5 +1,5 @@
 -- =====================================================================
--- GROUPFIN — Schema de base de données
+-- OHADA_CONSO+ — Schema de base de données
 -- Plateforme de consolidation financière et reporting de groupe
 -- Moteur : MySQL / MariaDB (InnoDB, utf8mb4)
 -- =====================================================================

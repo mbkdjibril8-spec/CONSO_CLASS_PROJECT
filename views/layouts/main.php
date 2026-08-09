@@ -17,13 +17,13 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($title ?? 'GROUPFIN') ?> — GROUPFIN</title>
+    <title><?= h($title ?? 'OHADA_CONSO+') ?> — OHADA_CONSO+</title>
     <link rel="stylesheet" href="<?= h(asset('css/app.css')) ?>">
 </head>
 <body>
 <div class="app-shell">
     <header class="app-topbar">
-        <div class="brand">GROUPFIN <span>· NOVA AFRICA GROUP</span></div>
+        <div class="brand">OHADA_CONSO+ <span>· NOVA AFRICA GROUP</span></div>
         <div class="session-info">
             <?php if ($user): ?>
                 <a href="<?= h(base_url('notifications')) ?>" class="topbar-notif" title="Notifications">

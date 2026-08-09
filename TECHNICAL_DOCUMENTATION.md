@@ -1,4 +1,4 @@
-# Documentation technique — GROUPFIN
+# Documentation technique — OHADA_CONSO+
 
 Public visé : développeur reprenant ou maintenant le projet. Pour la logique **métier/financière** (formules, conventions de signe, bugs corrigés), voir [`docs/CONSOLIDATION_LOGIC.md`](docs/CONSOLIDATION_LOGIC.md) — ce document-ci couvre l'architecture applicative.
 

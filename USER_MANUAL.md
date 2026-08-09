@@ -1,11 +1,11 @@
-# Manuel utilisateur — GROUPFIN
+# Manuel utilisateur — OHADA_CONSO+
 
-Ce manuel explique comment utiliser la plateforme GROUPFIN, écran par écran, selon votre rôle. Pour la logique financière détaillée (formules de consolidation, conventions OHADA), voir [`docs/CONSOLIDATION_LOGIC.md`](docs/CONSOLIDATION_LOGIC.md).
+Ce manuel explique comment utiliser la plateforme OHADA_CONSO+, écran par écran, selon votre rôle. Pour la logique financière détaillée (formules de consolidation, conventions OHADA), voir [`docs/CONSOLIDATION_LOGIC.md`](docs/CONSOLIDATION_LOGIC.md).
 
 ## Sommaire
 
 1. [Connexion et comptes de démonstration](#1-connexion-et-comptes-de-démonstration)
-2. [Les rôles de GROUPFIN](#2-les-rôles-de-groupfin)
+2. [Les rôles de la plateforme](#2-les-rôles-de-la-plateforme)
 3. [Tableau de bord](#3-tableau-de-bord)
 4. [Saisie des données financières (Préparateur)](#4-saisie-des-données-financières-préparateur)
 5. [Validation du paquet filiale (Contrôleur)](#5-validation-du-paquet-filiale-contrôleur)
@@ -43,7 +43,7 @@ Groupfin@2026
 
 **Scénario de démonstration (état de départ)** : pour la période en cours, 5 des 6 filiales opérationnelles ont déjà soumis leur paquet financier ; le Maroc est encore en brouillon. Un écart intercompany Sénégal/France est déclaré et non résolu. Aucune consolidation n'a encore été lancée. Les 12 mois de l'année sont ouverts à la saisie (pas seulement le mois courant), pour permettre de tester le cycle complet sur n'importe quelle période.
 
-## 2. Les rôles de GROUPFIN
+## 2. Les rôles de la plateforme
 
 | Rôle | Peut faire |
 |---|---|
