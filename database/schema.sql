@@ -16,6 +16,7 @@ DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS minority_interests;
 DROP TABLE IF EXISTS eliminations;
 DROP TABLE IF EXISTS consolidation_adjustments;
+DROP TABLE IF EXISTS consolidation_line_items;
 DROP TABLE IF EXISTS consolidation_run_steps;
 DROP TABLE IF EXISTS consolidation_runs;
 DROP TABLE IF EXISTS intercompany_transactions;
@@ -315,6 +316,19 @@ CREATE TABLE minority_interests (
     CONSTRAINT fk_mi_run FOREIGN KEY (run_id) REFERENCES consolidation_runs(id) ON DELETE CASCADE,
     CONSTRAINT fk_mi_subsidiary FOREIGN KEY (subsidiary_id) REFERENCES subsidiaries(id),
     UNIQUE KEY uq_mi_run_subsidiary (run_id, subsidiary_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Résultat consolidé : montant final par compte (IS+BS) pour un run donné,
+-- après conversion, agrégation, éliminations et ajustements manuels.
+-- Voir docs/CONSOLIDATION_LOGIC.md pour la méthode de calcul.
+CREATE TABLE consolidation_line_items (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    run_id INT UNSIGNED NOT NULL,
+    account_id INT UNSIGNED NOT NULL,
+    amount DECIMAL(18,2) NOT NULL,
+    CONSTRAINT fk_cli_run FOREIGN KEY (run_id) REFERENCES consolidation_runs(id) ON DELETE CASCADE,
+    CONSTRAINT fk_cli_account FOREIGN KEY (account_id) REFERENCES accounts(id),
+    UNIQUE KEY uq_cli_run_account (run_id, account_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ---------------------------------------------------------------------

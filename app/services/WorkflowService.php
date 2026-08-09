@@ -58,7 +58,7 @@ class WorkflowService
             return [false, 'Ce paquet a déjà été soumis pour cette période.'];
         }
 
-        $accountsByCode = $this->accounts->allByCode();
+        $accountsByCode = $this->accounts->enterableByCode();
         $stored = $this->financialData->forSubsidiaryPeriod($subsidiary->id, $period->id);
         $rawAmounts = [];
         foreach ($accountsByCode as $code => $account) {

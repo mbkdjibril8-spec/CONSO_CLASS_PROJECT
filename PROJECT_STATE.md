@@ -1,8 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 4 — Workflow + intercompany : TERMINÉE ✅**
-Prochaine étape : Phase 5 — Moteur de consolidation.
+**Phase 5 — Moteur de consolidation : TERMINÉE ✅**
+Prochaine étape : Phase 6 — Budget vs Actual + dashboards.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -91,6 +91,26 @@ Toutes vérifiées en conditions réelles (HTTP via curl), avec remise à zéro 
 - 6/6 filiales validées pour décembre 2026 — prêt pour le run de consolidation (Phase 5).
 - Bug de tolérance d'arrondi corrigé pendant les tests : `ValidationService` comparait à 0,01 XOF près, trop strict face à l'arrondi indépendant de 9 comptes stockés en `DECIMAL(18,2)` (écarts résiduels observés jusqu'à 0,01 XOF sur des montants de centaines de millions). Tolérance portée à 1 XOF, documentée dans `ValidationService`.
 
+## Phase 5 — Réalisé
+- Nouvelle table `consolidation_line_items` (résultat consolidé par compte et par run) + 2 comptes calculés (`EQ_METHOD_INCOME`, `EQ_METHOD_INVESTMENT`) exclus de la saisie filiale (`AccountRepository::enterable()`).
+- `CurrencyConversionService` : taux moyen pour l'IS, taux de clôture pour le bilan.
+- `ConsolidationService` : pipeline en 7 étapes tracées (périmètre → conversion/agrégation → éliminations intercos → élimination dividendes → mise en équivalence → ajustements → intérêts minoritaires), chaque étape journalisée dans `consolidation_run_steps`.
+- Seules les paires intercompany `matched` sont éliminées automatiquement ; les `mismatch` restent en l'état et sont signalées (résolution via ajustement manuel — relie directement Phase 4 et Phase 5).
+- Écran de détail d'un run : compte de résultat consolidé et bilan consolidé hand-vérifiables, répartition part du groupe / part des minoritaires, taux utilisés, détail des éliminations et intérêts minoritaires.
+- Ajustements de consolidation manuels (`consolidation_adjustments`), appliqués selon `normal_balance` du compte, pleinement audités.
+
+## Bug trouvé et corrigé pendant les tests Phase 5 : écart de conversion devises
+Premier run réel : le bilan consolidé ne s'équilibrait pas (écart de ~8 200 XOF). Cause : le cahier des charges impose taux moyen pour l'IS et taux de clôture pour le bilan (§5) — pour une filiale en devise étrangère, cela crée mécaniquement un écart de conversion entre le résultat net (traduit au taux moyen) et les capitaux propres du bilan (traduits au taux de clôture), comme dans tout référentiel multi-devises. **Correctif :** les capitaux propres de chaque filiale (pour le calcul des intérêts minoritaires et de la part groupe) sont désormais dérivés directement de `Actif − Passif traduits` plutôt que de `Capital + Réserves + Résultat net` — absorbe l'écart automatiquement, garantit l'équilibre au centime près. Documenté dans `docs/CONSOLIDATION_LOGIC.md`. Trouvé uniquement parce que le run a été vérifié à la main (Actif vs Passif+CP) plutôt que simplement "ça s'affiche sans erreur".
+
+## Vérifications exécutées (DoD Phase 5)
+Toutes vérifiées en conditions réelles sur les données décembre 2026 (6/6 validées) :
+- Run complet : bilan consolidé équilibré exactement (3 084 176 188,74 XOF des deux côtés) après correction de l'écart de conversion.
+- Intérêt minoritaire NOVA Côte d'Ivoire (75 % détenue → 25 % minoritaire) : résultat net recalculé à la main (26 440 654,31 XOF) × 25 % = 6 610 163,58 XOF, valeur exacte produite par le run.
+- Taux de change affichés (EUR/MAD/GHS, moyen + clôture) sur l'écran de détail du run.
+- Ajustement manuel (retraitement de l'écart interco Sénégal/France, -5 000 000 XOF sur `IC_RECEIVABLE`) : relance du run → nouveau total actif exactement réduit de 5 000 000 XOF, bilan toujours équilibré, écriture dans `audit_logs`.
+- Run bloqué avec message explicite tant qu'une filiale du périmètre n'est pas `validated` (testé avant validation du Maroc).
+- RBAC : Préparateur → 403 sur `/consolidation` ; DAF (lecture seule) → 200 en lecture, 403 sur le lancement d'un run.
+
 ## Ajustements UI (hors phase, sur retour utilisateur)
 - Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
 
@@ -104,9 +124,8 @@ Toutes vérifiées en conditions réelles (HTTP via curl), avec remise à zéro 
 - Hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.
 - **Productisation / revente à d'autres entreprises (discuté 2026-08-08, décision utilisateur : traiter après la fin du V1)** : l'architecture est déjà single-tenant/réutilisable (une base = un groupe), mais deux choses restent codées en dur pour NOVA AFRICA GROUP : (1) le nom du groupe dans `views/layouts/main.php` et `views/auth/login.php` (à sortir vers `config.php`, ~30 min) ; (2) le plan de comptes est référencé par code (`REV`, `COGS`...) dans `ValidationService` — un nouveau client peut renommer les libellés mais pas changer la structure sans toucher au code. Modèle retenu pour la revente : une installation (base + config) par client, pas de multi-tenant (rejeté : chantier de plusieurs semaines, risque sécurité de fuite de données entre clients pour un bénéfice non demandé).
 
-## Prochaines étapes (Phase 5)
-- `CurrencyConversionService` (taux moyen pour l'IS, taux de clôture pour le bilan) et `ConsolidationService` (périmètre → conversion → agrégation → éliminations intercos → élimination des dividendes → intérêts minoritaires).
-- Traitement spécifique NOVA Ghana (mise en équivalence) vs les 5 autres filiales (intégration globale).
-- `consolidation_runs` / `consolidation_run_steps` : run traçable avec journal de chaque étape.
-- Ajustements de consolidation manuels (`consolidation_adjustments`), pleinement auditables.
-- Utiliser les 6 paquets déjà validés en décembre 2026 (Phase 4) comme jeu de données du premier run réel.
+## Prochaines étapes (Phase 6)
+- Stockage et calcul des écarts Budget vs Actual (les données budget existent déjà depuis Phase 3, seed_financials.php).
+- Dashboard CODIR : KPIs groupe, évolution CA/EBITDA/résultat net, contribution par filiale (top/bottom), alertes (soumission manquante, écart important, mismatch interco).
+- Dashboard filiale, filtres période/filiale/pays, drill-down Groupe → Filiale → Compte.
+- Base de données à valider/consolider en local avant de démarrer (exécuter le scénario de démo complet : valider les 6 filiales de décembre, lancer un run) pour disposer de données de run à afficher dans les dashboards.

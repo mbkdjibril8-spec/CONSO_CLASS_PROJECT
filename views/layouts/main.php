@@ -46,6 +46,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
                 <?php $navLink('subsidiaries', 'Filiales'); ?>
                 <?php $navLink('subsidiaries/tree', 'Hiérarchie'); ?>
                 <?php $navLink('exchange-rates', 'Taux de change'); ?>
+                <?php $navLink('consolidation', 'Consolidation'); ?>
             <?php elseif ($user->subsidiaryId): ?>
                 <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>
             <?php endif; ?>

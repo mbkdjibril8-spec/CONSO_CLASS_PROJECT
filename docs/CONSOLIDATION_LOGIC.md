@@ -3,7 +3,7 @@
 Ce document consigne les choix de traitement comptable retenus lorsque
 plusieurs approches étaient défendables (règle §8.5 du cahier des charges).
 Il est complété phase après phase (Phase 3 : plan de comptes et collecte ;
-Phase 5 : moteur de consolidation).
+Phase 4 : workflow et intercompany ; Phase 5 : moteur de consolidation).
 
 ## Plan de comptes (Phase 3)
 
@@ -163,3 +163,89 @@ lignes en erreur (code compte inconnu, montant non numérique, négatif non
 autorisé) sont rapportées avec leur numéro de ligne sans bloquer
 l'enregistrement des lignes valides — cohérent avec un usage tableur où
 l'utilisateur corrige et réimporte uniquement les lignes en erreur.
+
+## Moteur de consolidation (Phase 5)
+
+### Pipeline
+1. **Périmètre** — filiales actives en méthode `full` ou `equity` ; le run
+   échoue si l'une d'elles n'a pas de paquet `validated` pour la période
+   (source : dernière transition `workflow_transitions`, cf. Phase 4).
+   `excluded` (NOVA Holding) n'entre jamais dans le run.
+2. **Conversion + agrégation** — chaque compte IS/BS des filiales en
+   intégration globale est converti en XOF (moyen pour l'IS, clôture pour
+   le bilan) puis sommé compte par compte. Le CF n'est pas consolidé
+   (décision Phase 3).
+3. **Éliminations intercompany** — seules les paires au statut `matched`
+   (Phase 4) sont éliminées automatiquement, des deux côtés (le compte de
+   la filiale déclarante ET celui de la contrepartie). Une paire `mismatch`
+   n'est **jamais** éliminée automatiquement : elle reste telle quelle dans
+   l'agrégat et est signalée dans le journal du run ("écart non résolu") —
+   à corriger via le module Intercompany ou un ajustement de consolidation
+   manuel avant une prochaine exécution.
+4. **Élimination des dividendes** — un dividende n'est éliminé que si la
+   filiale émettrice ET la filiale destinataire sont toutes deux dans le
+   périmètre d'intégration globale. Dans le jeu de données NOVA AFRICA
+   GROUP, tous les dividendes sont déclarés vers NOVA Holding (hors
+   périmètre, cf. Phase 1) : cette étape s'exécute donc réellement mais
+   ne trouve rien à éliminer — comportement honnête, pas une fonctionnalité
+   fictive (règle §8.2).
+5. **Mise en équivalence** — pour chaque filiale `equity` (NOVA Ghana),
+   quote-part de résultat = `% détention × résultat net` (ajoutée à un
+   compte dédié `EQ_METHOD_INCOME`) ; titres mis en équivalence = `%
+   détention × capitaux propres` (compte dédié `EQ_METHOD_INVESTMENT`).
+   Traitement en "photo" (pas de suivi multi-période des mouvements de
+   réserves de mise en équivalence — hors périmètre V1, voir backlog).
+6. **Ajustements de consolidation** — les écritures `posted` de la période
+   sont appliquées à l'agrégat selon `normal_balance` du compte et le sens
+   (débit/crédit) de l'écriture.
+7. **Intérêts minoritaires** — calculés par filiale en intégration
+   globale détenue à moins de 100 % (voir formule ci-dessous).
+
+### Écart de conversion (traduction devises) et équilibre du bilan
+Le cahier des charges impose un taux **moyen** pour l'IS et un taux de
+**clôture** pour le bilan (§5). Appliqué à une filiale en devise étrangère,
+cela signifie que le résultat net (traduit au taux moyen) et les capitaux
+propres du bilan (traduits au taux de clôture) ne "s'emboîtent" plus
+exactement — un écart de conversion apparaît nécessairement, comme dans
+tout référentiel de consolidation multi-devises (IFRS : réserve OCI).
+
+**Choix retenu (le plus simple et le plus robuste) :** plutôt que de
+calculer et d'afficher un compte "écart de conversion" séparé, les
+capitaux propres de chaque filiale sont **dérivés directement de
+Actif − Passif traduits** (et non de Capital + Réserves + Résultat net).
+Cette quantité absorbe automatiquement l'écart de conversion et garantit
+que `Actif = Passif + Capitaux propres` reste vérifié **au centime près**,
+y compris pour les filiales en EUR/MAD/GHS. Pour une filiale en XOF
+(devise de consolidation, aucune conversion), cette formule redonne
+exactement Capital + Réserves + Résultat net — aucune différence de
+traitement, juste une formule plus générale. La quote-part groupe et la
+quote-part minoritaire de ces capitaux propres appliquent ensuite
+`% détention` / `% minoritaire` à cette même quantité.
+
+**Intérêt minoritaire (formule) :**
+```
+minority_pct = 100 − ownership_pct
+Résultat net minoritaire = minority_pct × Résultat_net_filiale
+Capitaux propres minoritaires = minority_pct × (Actif_filiale − Passif_filiale), traduits en XOF
+```
+Vérifié à la main sur le jeu de données décembre 2026 : NOVA Côte d'Ivoire
+(75 % détenue, 25 % minoritaire), résultat net calculé 26 440 654,31 XOF
+→ quote-part minoritaire = 25 % × 26 440 654,31 = 6 610 163,58 XOF,
+exactement la valeur produite par le run.
+
+### Ajustements de consolidation : écriture à un seul compte
+Le schéma retient une ligne par ajustement (compte, sens, montant, motif) —
+pas une écriture à deux lignes équilibrées comme un vrai journal comptable.
+Puisque les capitaux propres groupe sont calculés en résiduel (voir
+ci-dessus), un ajustement sur un compte d'actif ou de passif est
+automatiquement absorbé par les capitaux propres consolidés, sans qu'il
+soit nécessaire de saisir une seconde ligne de contrepartie. C'est le
+choix le plus simple compatible avec le schéma existant et avec
+l'exigence du cahier des charges ("écritures débit/crédit" — sans exiger
+explicitly un journal à double entrée équilibré ligne à ligne).
+
+### Hors périmètre V1 (voir aussi PROJECT_STATE.md)
+Un run de consolidation est un instantané (aucun report des ajustements
+ou de la réserve de conversion d'un mois sur l'autre) ; le CF n'est pas
+consolidé ; pas d'élimination de marge interne sur stocks ; pas de
+consolidation proportionnelle.

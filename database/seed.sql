@@ -176,3 +176,13 @@ INSERT INTO accounts (code, label, statement_type, section, normal_balance, is_i
     ('CF_OPERATING', 'Flux de trésorerie d''exploitation', 'CF', 'flux', 'debit', 0, 10),
     ('CF_INVESTING', 'Flux de trésorerie d''investissement', 'CF', 'flux', 'debit', 0, 20),
     ('CF_FINANCING', 'Flux de trésorerie de financement', 'CF', 'flux', 'debit', 0, 30);
+
+-- =====================================================================
+-- Phase 5 : lignes de mise en équivalence (voir docs/CONSOLIDATION_LOGIC.md).
+-- Ne sont jamais saisies par une filiale : calculées par le moteur de
+-- consolidation pour les filiales en méthode "equity" (NOVA Ghana).
+-- =====================================================================
+
+INSERT INTO accounts (code, label, statement_type, section, normal_balance, is_intercompany, display_order) VALUES
+    ('EQ_METHOD_INCOME', 'Quote-part de résultat des sociétés mises en équivalence', 'IS', 'equity_method', 'credit', 0, 110),
+    ('EQ_METHOD_INVESTMENT', 'Titres mis en équivalence', 'BS', 'equity_method', 'debit', 0, 45);

@@ -34,6 +34,7 @@ use App\Core\Request;
 use App\Core\Router;
 use App\Core\Session;
 use App\Controllers\AuthController;
+use App\Controllers\ConsolidationController;
 use App\Controllers\DashboardController;
 use App\Controllers\ExchangeRateController;
 use App\Controllers\FinancialDataController;
@@ -120,6 +121,14 @@ $router->post('/financial-data/{subsidiaryId}/{periodId}/reject', [WorkflowContr
 $router->get('/intercompany', [IntercompanyController::class, 'index'], [$auth, $allRoles]);
 $router->get('/intercompany/create', [IntercompanyController::class, 'createForm'], [$auth, $preparerOnly]);
 $router->post('/intercompany', [IntercompanyController::class, 'store'], [$auth, $preparerOnly, $csrf]);
+
+// --- Consolidation -----------------------------------------------------------
+// Routes statiques (adjustments) déclarées AVANT la route dynamique {id}.
+$router->get('/consolidation', [ConsolidationController::class, 'index'], [$auth, $groupRoles]);
+$router->post('/consolidation/run', [ConsolidationController::class, 'run'], [$auth, $periodManagers, $csrf]);
+$router->get('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsIndex'], [$auth, $groupRoles]);
+$router->post('/consolidation/adjustments', [ConsolidationController::class, 'adjustmentsStore'], [$auth, $periodManagers, $csrf]);
+$router->get('/consolidation/{id}', [ConsolidationController::class, 'show'], [$auth, $groupRoles]);
 
 $request = new Request();
 $router->dispatch($request);

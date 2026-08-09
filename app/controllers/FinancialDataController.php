@@ -47,7 +47,7 @@ class FinancialDataController extends Controller
             return;
         }
 
-        $totalAccounts = count($this->accounts->all());
+        $totalAccounts = count($this->accounts->enterable());
         $rows = [];
         foreach ($this->periods->all() as $period) {
             $rows[] = [
@@ -75,7 +75,7 @@ class FinancialDataController extends Controller
             return;
         }
 
-        $accountsByCode = $this->accounts->allByCode();
+        $accountsByCode = $this->accounts->enterableByCode();
         $stored = $this->financialData->forSubsidiaryPeriod($subsidiary->id, $period->id);
 
         $rawAmounts = [];
@@ -132,7 +132,7 @@ class FinancialDataController extends Controller
             return;
         }
 
-        $accountsByCode = $this->accounts->allByCode();
+        $accountsByCode = $this->accounts->enterableByCode();
         $rawAmounts = [];
         foreach ($accountsByCode as $code => $account) {
             $rawAmounts[$code] = (string) $request->input('amount_' . $code, '');
@@ -175,7 +175,7 @@ class FinancialDataController extends Controller
             return;
         }
 
-        $accountsByCode = $this->accounts->allByCode();
+        $accountsByCode = $this->accounts->enterableByCode();
         $result = (new CsvImportService())->import(
             $_FILES['csv'] ?? [],
             $subsidiary->id,
