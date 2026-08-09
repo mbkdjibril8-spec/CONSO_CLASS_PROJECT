@@ -56,4 +56,103 @@ class FinancialDataRepository
         $value = $stmt->fetchColumn();
         return $value === false ? null : (float) $value;
     }
+
+    /**
+     * Somme des montants réels par compte pour une période, filiales combinées
+     * (vision "cumulée" non consolidée — pas d'élimination interco ni de
+     * répartition minoritaire : voir docs/CONSOLIDATION_LOGIC.md §Dashboards).
+     * @return array<string, float>
+     */
+    public function sumByAccountForPeriod(int $periodId, ?array $subsidiaryIds = null): array
+    {
+        $sql = 'SELECT a.code, SUM(fd.amount) AS total
+                FROM financial_data fd
+                JOIN accounts a ON a.id = fd.account_id
+                WHERE fd.period_id = :period_id';
+        $params = ['period_id' => $periodId];
+
+        if ($subsidiaryIds !== null) {
+            if (empty($subsidiaryIds)) {
+                return [];
+            }
+            $placeholders = [];
+            foreach ($subsidiaryIds as $i => $id) {
+                $key = "sid{$i}";
+                $placeholders[] = ":{$key}";
+                $params[$key] = $id;
+            }
+            $sql .= ' AND fd.subsidiary_id IN (' . implode(',', $placeholders) . ')';
+        }
+        $sql .= ' GROUP BY a.code';
+
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute($params);
+
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[$row['code']] = (float) $row['total'];
+        }
+        return $result;
+    }
+
+    /**
+     * Somme des montants réels par compte ET par période sur une année (tendance
+     * 12 mois), filiales combinées.
+     * @return array<int, array<string, float>> period_id => [code => total]
+     */
+    public function sumByAccountForYear(int $year, ?array $subsidiaryIds = null): array
+    {
+        $sql = 'SELECT rp.id AS period_id, a.code, SUM(fd.amount) AS total
+                FROM financial_data fd
+                JOIN accounts a ON a.id = fd.account_id
+                JOIN reporting_periods rp ON rp.id = fd.period_id
+                WHERE rp.year = :year';
+        $params = ['year' => $year];
+
+        if ($subsidiaryIds !== null) {
+            if (empty($subsidiaryIds)) {
+                return [];
+            }
+            $placeholders = [];
+            foreach ($subsidiaryIds as $i => $id) {
+                $key = "sid{$i}";
+                $placeholders[] = ":{$key}";
+                $params[$key] = $id;
+            }
+            $sql .= ' AND fd.subsidiary_id IN (' . implode(',', $placeholders) . ')';
+        }
+        $sql .= ' GROUP BY rp.id, a.code';
+
+        $stmt = Database::connection()->prepare($sql);
+        $stmt->execute($params);
+
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[(int) $row['period_id']][$row['code']] = (float) $row['total'];
+        }
+        return $result;
+    }
+
+    /**
+     * Montants IS par filiale pour une période, indexés filiale puis code
+     * compte — permet de recalculer EBITDA/résultat net par filiale en PHP
+     * (les comptes de charges doivent être soustraits, pas sommés bruts).
+     * @return array<int, array<string, float>> subsidiary_id => [code => amount]
+     */
+    public function isAmountsGroupedBySubsidiary(int $periodId): array
+    {
+        $stmt = Database::connection()->prepare(
+            "SELECT fd.subsidiary_id, a.code, fd.amount
+             FROM financial_data fd
+             JOIN accounts a ON a.id = fd.account_id
+             WHERE fd.period_id = :period_id AND a.statement_type = 'IS'"
+        );
+        $stmt->execute(['period_id' => $periodId]);
+
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[(int) $row['subsidiary_id']][$row['code']] = (float) $row['amount'];
+        }
+        return $result;
+    }
 }

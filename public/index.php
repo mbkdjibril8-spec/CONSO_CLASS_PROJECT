@@ -24,6 +24,7 @@ spl_autoload_register(function (string $class): void {
 });
 
 require __DIR__ . '/../app/helpers/helpers.php';
+require __DIR__ . '/../app/helpers/charts.php';
 
 $config = require __DIR__ . '/../config/config.php';
 date_default_timezone_set($config['app']['timezone']);
@@ -34,6 +35,7 @@ use App\Core\Request;
 use App\Core\Router;
 use App\Core\Session;
 use App\Controllers\AuthController;
+use App\Controllers\BudgetController;
 use App\Controllers\ConsolidationController;
 use App\Controllers\DashboardController;
 use App\Controllers\ExchangeRateController;
@@ -121,6 +123,9 @@ $router->post('/financial-data/{subsidiaryId}/{periodId}/reject', [WorkflowContr
 $router->get('/intercompany', [IntercompanyController::class, 'index'], [$auth, $allRoles]);
 $router->get('/intercompany/create', [IntercompanyController::class, 'createForm'], [$auth, $preparerOnly]);
 $router->post('/intercompany', [IntercompanyController::class, 'store'], [$auth, $preparerOnly, $csrf]);
+
+// --- Budget vs Actual ----------------------------------------------------------
+$router->get('/budgets', [BudgetController::class, 'index'], [$auth, $allRoles]);
 
 // --- Consolidation -----------------------------------------------------------
 // Routes statiques (adjustments) déclarées AVANT la route dynamique {id}.

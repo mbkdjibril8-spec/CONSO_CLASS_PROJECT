@@ -1,8 +1,8 @@
 # PROJECT_STATE — GROUPFIN
 
 ## Phase courante
-**Phase 5 — Moteur de consolidation : TERMINÉE ✅**
-Prochaine étape : Phase 6 — Budget vs Actual + dashboards.
+**Phase 6 — Budget vs Actual + dashboards : TERMINÉE ✅**
+Prochaine étape : Phase 7 — Notifications, audit, exports.
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -111,6 +111,25 @@ Toutes vérifiées en conditions réelles sur les données décembre 2026 (6/6 v
 - Run bloqué avec message explicite tant qu'une filiale du périmètre n'est pas `validated` (testé avant validation du Maroc).
 - RBAC : Préparateur → 403 sur `/consolidation` ; DAF (lecture seule) → 200 en lecture, 403 sur le lancement d'un run.
 
+## Phase 6 — Réalisé
+- `ReportingService` : KPIs (CA/EBITDA/résultat net) Actual vs Budget, tendance 12 mois, contribution EBITDA par filiale, alertes — vision "cumulée" (hors éliminations/mise en équivalence), distincte du résultat consolidé officiel (voir `docs/CONSOLIDATION_LOGIC.md` §Dashboards).
+- `BudgetVarianceService` : écart et écart % avec sens favorable/défavorable correct selon la nature du compte (produit vs charge).
+- Dashboard CODIR (`/dashboard`, rôles groupe) : filtres période/pays/filiale, tuiles KPI avec écart vs budget, graphique de tendance (courbes SVG, survol avec réticule + infobulle), graphique de contribution par filiale (barres horizontales), panneau d'alertes (soumissions manquantes, écarts importants, mismatch interco, "prêt à consolider" avec raccourci direct).
+- Dashboard filiale : même écran, automatiquement restreint à la filiale du Préparateur/Contrôleur connecté.
+- Écran dédié **Budget vs Actual** (`/budgets`) : tableau par compte, mois + cumul YTD, Actual/Budget/Écart/Écart %.
+- Composants graphiques SVG maison (`app/helpers/charts.php`) suivant la méthodologie de dataviz interne : palette catégorielle validée CVD-safe (script `validate_palette.js`), traits 2px, marqueurs avec anneau de surface, légende systématique, libellés directs en bout de série, grille discrète, survol avec réticule + infobulle.
+
+## Bug trouvé et corrigé pendant les tests Phase 6 : mélange de devises
+Les premiers KPIs groupe sommaient `financial_data`/`budgets` de plusieurs filiales sans convertir les devises locales en XOF — un mélange silencieux XOF+EUR+MAD qui sous-pondérait fortement la France et le Maroc (ex. filtrer sur le Maroc seul affichait "2,7 M XOF" alors que le vrai montant était 2,7 M **MAD**, soit 176,3 M XOF une fois converti). Corrigé : `ReportingService` convertit chaque filiale en XOF (taux moyen) avant toute somme multi-filiale. Trouvé en comparant les totaux du dashboard à ceux du run de consolidation Phase 5 (qui, eux, convertissaient déjà correctement) — les deux devraient être proches et ne l'étaient pas.
+
+## Vérifications exécutées (DoD Phase 6)
+Toutes vérifiées en conditions réelles (HTTP via curl) :
+- KPIs traçables en base : EBITDA cumulé décembre (198,8 M XOF) cohérent avec l'EBITDA du run de consolidation Phase 5 (198 750 149,75 XOF) — même périmètre, écart résiduel attendu (mismatch interco non éliminé dans la vision cumulée).
+- Conversion devises vérifiée à la main : Maroc décembre 2 687 098,65 MAD × 65,60 (taux moyen) = 176 273 671,86 XOF, valeur exacte affichée après correction.
+- Changement de filtre (période/filiale/pays) recalcule tous les widgets (KPIs, tendance, contribution) — testé en isolant la France (conversion EUR vérifiée à la main également) et le Maroc.
+- Alertes reflètent l'état réel : "6 paquets non validés" avant toute validation ; disparition progressive au fil des validations ; alerte "prêt à consolider" apparue une fois les 6 filiales validées puis disparue après le run — cycle complet vérifié en direct.
+- RBAC : rôles filiale ne voient ni le sélecteur filiale/pays, ni le panneau d'alertes, ni le graphique de contribution (vue restreinte à leur propre filiale, sans possibilité de la contourner via paramètre d'URL — contrôlé côté serveur, pas seulement masqué côté UI).
+
 ## Ajustements UI (hors phase, sur retour utilisateur)
 - Écran de connexion refondu : layout deux colonnes (identité de groupe sur fond graphite avec trame subtile + empreinte géographique du groupe / formulaire épuré sans carte superflue), cohérent avec la direction "salle de contrôle financière" (§7). Voir `views/auth/login.php` et la section "Écran de connexion" de `public/assets/css/app.css`.
 
@@ -124,8 +143,7 @@ Toutes vérifiées en conditions réelles sur les données décembre 2026 (6/6 v
 - Hors-scope V1 déjà exclu dès la conception du schéma : pas de consolidation proportionnelle, pas de dimensions analytiques, pas de taux de change historiques au-delà moyen/clôture.
 - **Productisation / revente à d'autres entreprises (discuté 2026-08-08, décision utilisateur : traiter après la fin du V1)** : l'architecture est déjà single-tenant/réutilisable (une base = un groupe), mais deux choses restent codées en dur pour NOVA AFRICA GROUP : (1) le nom du groupe dans `views/layouts/main.php` et `views/auth/login.php` (à sortir vers `config.php`, ~30 min) ; (2) le plan de comptes est référencé par code (`REV`, `COGS`...) dans `ValidationService` — un nouveau client peut renommer les libellés mais pas changer la structure sans toucher au code. Modèle retenu pour la revente : une installation (base + config) par client, pas de multi-tenant (rejeté : chantier de plusieurs semaines, risque sécurité de fuite de données entre clients pour un bénéfice non demandé).
 
-## Prochaines étapes (Phase 6)
-- Stockage et calcul des écarts Budget vs Actual (les données budget existent déjà depuis Phase 3, seed_financials.php).
-- Dashboard CODIR : KPIs groupe, évolution CA/EBITDA/résultat net, contribution par filiale (top/bottom), alertes (soumission manquante, écart important, mismatch interco).
-- Dashboard filiale, filtres période/filiale/pays, drill-down Groupe → Filiale → Compte.
-- Base de données à valider/consolider en local avant de démarrer (exécuter le scénario de démo complet : valider les 6 filiales de décembre, lancer un run) pour disposer de données de run à afficher dans les dashboards.
+## Prochaines étapes (Phase 7)
+- Centre de notifications (badge non-lues, liste, marquer comme lu) — les évènements sont déjà créés en base depuis la Phase 4 (soumission, rejet, mismatch) ; ajouter l'évènement `consolidation_ready`.
+- Visualiseur du journal d'audit (`audit_logs`) avec filtres par utilisateur/filiale/période.
+- Exports Excel/CSV : états consolidés, paquets filiale, vue dashboard courante.

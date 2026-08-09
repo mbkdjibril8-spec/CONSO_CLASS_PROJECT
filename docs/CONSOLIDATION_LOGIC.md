@@ -249,3 +249,50 @@ Un run de consolidation est un instantané (aucun report des ajustements
 ou de la réserve de conversion d'un mois sur l'autre) ; le CF n'est pas
 consolidé ; pas d'élimination de marge interne sur stocks ; pas de
 consolidation proportionnelle.
+
+## Dashboards et Budget vs Actual (Phase 6)
+
+### Vision "cumulée" vs résultat "consolidé"
+Le dashboard CODIR et l'écran Budget vs Actual affichent une vision
+**cumulée** : somme des filiales en intégration globale, **sans**
+élimination intercompany ni mise en équivalence. C'est délibérément
+différent du résultat **consolidé** officiel produit par un run (Phase 5),
+pour deux raisons :
+1. Un run n'existe pas forcément pour chaque mois de l'année — la tendance
+   12 mois doit rester lisible même sans historique de runs.
+2. Lancer une consolidation est un acte de gouvernance volontaire (voir
+   §Workflow) ; le dashboard ne doit jamais recalculer silencieusement un
+   résultat "consolidé" en le faisant passer pour officiel.
+
+Le libellé à l'écran ("vision cumulée... hors éliminations") rend cette
+distinction explicite. Sur les données de démonstration, l'écart entre les
+deux visions est faible (le seul écart interco de décembre est un
+`mismatch` non éliminé de toute façon, et aucun dividende n'est éliminable
+dans ce périmètre) — vérifié : EBITDA cumulé décembre 198,8 M XOF vs EBITDA
+du run de consolidation 198 750 149,75 XOF.
+
+### Conversion multi-devises avant agrégation (bug corrigé en Phase 6)
+Les montants filiale sont stockés en **devise locale**. Une première
+version sommait directement `financial_data`/`budgets` sur plusieurs
+filiales sans conversion — mélangeant XOF, EUR et MAD comme si c'était la
+même unité (silencieusement faux : la France et le Maroc pesaient pour une
+fraction dérisoire de leur poids réel). Corrigé : `ReportingService`
+convertit chaque filiale en XOF (taux moyen, cohérent avec la convention
+IS) **avant** toute somme multi-filiale. Vérifié à la main : Maroc décembre
+2 687 098,65 MAD × 65,60 = 176 273 671,86 XOF, valeur exacte affichée.
+
+### Palette catégorielle des filiales (dashboards)
+Couleurs fixes par filiale (jamais recalculées selon le filtre actif),
+validées CVD-safe (script `validate_palette.js` du système de dataviz
+interne) : NOVA-CI bleu, NOVA-FR aqua, NOVA-GH jaune, NOVA-MA vert,
+NOVA-ML violet, NOVA-SN rouge. Distinctes des 3 couleurs de tendance
+(revenu/EBITDA/résultat net, bleu/aqua/violet) pour ne jamais laisser un
+graphique de contribution et un graphique de tendance se contredire
+visuellement sur le même écran.
+
+### Seuil d'alerte "écart important"
+Écart de chiffre d'affaires vs budget > 15 % (défavorable) par filiale —
+choix simple et documenté plutôt qu'un seuil dérivé statistiquement,
+cohérent avec le seuil d'anomalie de 50 % déjà utilisé en Phase 3 pour la
+variation mensuelle (deux contextes différents : écart vs un budget fixé
+à l'avance ici, variation d'un mois sur l'autre là).

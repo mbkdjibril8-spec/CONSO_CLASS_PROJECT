@@ -105,12 +105,24 @@ class ValidationService
     /** @param array<string,float> $amounts */
     public function computeNetIncome(array $amounts): float
     {
-        $revenue = ($amounts['REV'] ?? 0) + ($amounts['IC_REVENUE'] ?? 0);
-        $ebitda = $revenue - ($amounts['COGS'] ?? 0) - ($amounts['OPEX_PERS'] ?? 0)
-                - ($amounts['OPEX_OTHER'] ?? 0) - ($amounts['IC_EXPENSE'] ?? 0);
+        $ebitda = $this->computeEbitda($amounts);
         $ebit = $ebitda - ($amounts['DA'] ?? 0);
         $preTax = $ebit + ($amounts['FIN_INCOME'] ?? 0) - ($amounts['FIN_EXPENSE'] ?? 0);
         return $preTax - ($amounts['TAX'] ?? 0);
+    }
+
+    /** @param array<string,float> $amounts */
+    public function computeEbitda(array $amounts): float
+    {
+        $revenue = ($amounts['REV'] ?? 0) + ($amounts['IC_REVENUE'] ?? 0);
+        return $revenue - ($amounts['COGS'] ?? 0) - ($amounts['OPEX_PERS'] ?? 0)
+             - ($amounts['OPEX_OTHER'] ?? 0) - ($amounts['IC_EXPENSE'] ?? 0);
+    }
+
+    /** @param array<string,float> $amounts */
+    public function computeRevenue(array $amounts): float
+    {
+        return ($amounts['REV'] ?? 0) + ($amounts['IC_REVENUE'] ?? 0);
     }
 
     /** @param array<string,float> $amounts @param string[] $codes */

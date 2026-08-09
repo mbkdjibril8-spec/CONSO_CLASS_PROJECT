@@ -51,6 +51,7 @@ $currentPath = $_SERVER['REQUEST_URI'] ?? '';
                 <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>
             <?php endif; ?>
             <?php $navLink('intercompany', 'Intercompany'); ?>
+            <?php $navLink('budgets', 'Budget vs Actual'); ?>
             <?php $navLink('periods', 'Périodes'); ?>
         </nav>
     </aside>

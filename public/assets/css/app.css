@@ -180,7 +180,64 @@ p { margin: 0 0 .75em 0; }
   padding: 14px 16px;
 }
 .kpi .kpi-label { font-size: .75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
-.kpi .kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--color-graphite); margin-top: 4px; }
+.kpi .kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--color-graphite); margin-top: 4px; font-variant-numeric: normal; }
+.kpi .kpi-sub { font-size: .78rem; margin-top: 6px; color: var(--color-text-muted); }
+.kpi .kpi-delta { font-weight: 600; }
+.kpi .kpi-delta.is-favorable { color: var(--color-positive); }
+.kpi .kpi-delta.is-unfavorable { color: var(--color-negative); }
+
+/* --------------------------------------------------------------------
+   Graphiques (dashboards Phase 6)
+   -------------------------------------------------------------------- */
+
+.chart-wrap { width: 100%; }
+.chart-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart-hitlayer { cursor: crosshair; }
+
+.chart-legend { display: flex; gap: 18px; margin-bottom: 10px; flex-wrap: wrap; }
+.chart-legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: .8rem; color: var(--color-text-muted); }
+.chart-legend-swatch { width: 14px; height: 2px; display: inline-block; border-radius: 1px; }
+
+.chart-svg-container { position: relative; }
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  min-width: 168px;
+  background: var(--color-graphite);
+  color: #fff;
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: .78rem;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0,0,0,.22);
+  z-index: 5;
+}
+.chart-tooltip-title { font-weight: 700; margin-bottom: 4px; color: #fff; }
+.chart-tooltip-row { display: flex; justify-content: space-between; gap: 14px; color: #cfd3d8; }
+.chart-tooltip-row strong { color: #fff; font-variant-numeric: tabular-nums; }
+
+/* --------------------------------------------------------------------
+   Alertes du dashboard CODIR
+   -------------------------------------------------------------------- */
+
+.alert-list { display: flex; flex-direction: column; gap: 8px; }
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: .85rem;
+  border: 1px solid transparent;
+}
+.alert-item .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alert-item.sev-critical { background: var(--color-negative-bg); border-color: #f1c4c1; }
+.alert-item.sev-critical .alert-dot { background: var(--color-negative); }
+.alert-item.sev-warning { background: var(--color-warning-bg); border-color: #f0dcac; }
+.alert-item.sev-warning .alert-dot { background: var(--color-warning); }
+.alert-item.sev-info { background: var(--color-info-bg); border-color: #bcdce6; }
+.alert-item.sev-info .alert-dot { background: var(--color-info); }
+.alert-item form { margin-left: auto; }
 
 /* --------------------------------------------------------------------
    Tables
