@@ -57,9 +57,18 @@ function base_url(string $path = ''): string
     return $base . '/' . ltrim($path, '/');
 }
 
+/**
+ * URL d'un asset statique avec cache-busting automatique (?v=mtime) : le
+ * navigateur recharge le fichier dès qu'il change sur le disque, sans
+ * jamais servir une version en cache après une modification (CSS/JS) —
+ * évite d'avoir à faire un rechargement forcé (Ctrl+F5) à chaque ajustement.
+ */
 function asset(string $path): string
 {
-    return base_url('assets/' . ltrim($path, '/'));
+    $relative = 'assets/' . ltrim($path, '/');
+    $absolute = __DIR__ . '/../../public/' . $relative;
+    $version = is_file($absolute) ? filemtime($absolute) : null;
+    return base_url($relative) . ($version ? '?v=' . $version : '');
 }
 
 /** Génère (ou réutilise) le jeton CSRF de la session courante. */
