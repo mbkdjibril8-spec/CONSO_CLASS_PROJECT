@@ -6,7 +6,7 @@ enrichi, ajoutés au périmètre à la demande de l'utilisateur le 2026-08-09).
 **OHADA_CONSO+ V1 est complet.** Prochaines étapes : voir "Cuts / V2 backlog" ci-dessous (productisation multi-client,
 dynamisme approfondi) — explicitement reportées après V1 par décision utilisateur.
 **Ajustement post-Phase 8 (2026-08-09) : TERMINÉ ✅** — renommage GROUPFIN → OHADA_CONSO+, correctifs UX dashboard,
-arbre de hiérarchie dynamique (voir section dédiée ci-dessous).
+arbre de hiérarchie dynamique, icônes de navigation animées (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -249,6 +249,12 @@ connecteurs en pseudo-éléments sur des `<li>` en flexbox, se redispose automat
 profondeur/largeur sans recalcul JS) avec repli/dépli par filiale (clic sur le bouton rond sous chaque nœud,
 état purement client — pas persisté, pas nécessaire pour un usage de consultation). Même donnée qu'avant
 (`SubsidiaryService::tree()`), seule la présentation change.
+
+### Icônes de navigation animées
+Chaque lien de la barre latérale a désormais une icône SVG dédiée (`nav_icon()`, `app/helpers/helpers.php`) —
+traits simples, `currentColor`, aucune police d'icônes/dépendance externe. Au survol et à l'état actif : icône
+qui change de couleur/s'agrandit légèrement, retrait du lien qui glisse, petit point d'accent animé sur l'item
+actif. `prefers-reduced-motion` respecté (animations désactivées).
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

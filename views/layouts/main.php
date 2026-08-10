@@ -40,27 +40,28 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
     </header>
 
     <?php if ($user):
-        $navLink = function (string $path, string $label) use ($currentPath) {
+        $navLink = function (string $path, string $label, string $icon) use ($currentPath) {
             $active = $currentPath === base_url($path) || str_starts_with($currentPath, base_url($path) . '/');
-            echo '<a href="' . h(base_url($path)) . '" class="' . ($active ? 'active' : '') . '">' . h($label) . '</a>';
+            echo '<a href="' . h(base_url($path)) . '" class="' . ($active ? 'active' : '') . '">'
+                . nav_icon($icon) . '<span>' . h($label) . '</span></a>';
         };
     ?>
     <aside class="app-sidebar">
         <nav>
-            <?php $navLink('dashboard', 'Tableau de bord'); ?>
+            <?php $navLink('dashboard', 'Tableau de bord', 'dashboard'); ?>
             <?php if ($user->isGroupLevel()): ?>
-                <?php $navLink('subsidiaries', 'Filiales'); ?>
-                <?php $navLink('subsidiaries/tree', 'Hiérarchie'); ?>
-                <?php $navLink('exchange-rates', 'Taux de change'); ?>
-                <?php $navLink('consolidation', 'Consolidation'); ?>
-                <?php $navLink('financial-statements', 'Liasse groupe'); ?>
-                <?php $navLink('audit', "Journal d'audit"); ?>
+                <?php $navLink('subsidiaries', 'Filiales', 'subsidiaries'); ?>
+                <?php $navLink('subsidiaries/tree', 'Hiérarchie', 'hierarchy'); ?>
+                <?php $navLink('exchange-rates', 'Taux de change', 'exchange'); ?>
+                <?php $navLink('consolidation', 'Consolidation', 'consolidation'); ?>
+                <?php $navLink('financial-statements', 'Liasse groupe', 'statement'); ?>
+                <?php $navLink('audit', "Journal d'audit", 'audit'); ?>
             <?php elseif ($user->subsidiaryId): ?>
-                <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières'); ?>
+                <?php $navLink('financial-data/' . $user->subsidiaryId, 'Données financières', 'financial-data'); ?>
             <?php endif; ?>
-            <?php $navLink('intercompany', 'Intercompany'); ?>
-            <?php $navLink('budgets', 'Budget vs Actual'); ?>
-            <?php $navLink('periods', 'Périodes'); ?>
+            <?php $navLink('intercompany', 'Intercompany', 'intercompany'); ?>
+            <?php $navLink('budgets', 'Budget vs Actual', 'budgets'); ?>
+            <?php $navLink('periods', 'Périodes', 'periods'); ?>
         </nav>
     </aside>
     <?php endif; ?>
