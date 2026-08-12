@@ -10,6 +10,7 @@ use App\Repositories\ConsolidationRunRepository;
 use App\Repositories\FinancialDataRepository;
 use App\Repositories\ReportingPeriodRepository;
 use App\Repositories\SubsidiaryRepository;
+use App\Services\ConsolidationService;
 use App\Services\ReportingService;
 
 /**
@@ -43,6 +44,48 @@ class ExportController extends Controller
         }
 
         stream_csv_download('consolidation_' . $run['period_label'] . '.csv', $rows);
+    }
+
+    /**
+     * Export CSV de la liasse groupe au format OHADA/SYCEBNL (compte de
+     * résultat + bilan actif + bilan passif), tel qu'affiché sur l'écran
+     * "Liasse groupe" (/financial-statements) — distinct de
+     * consolidationRun() ci-dessus qui exporte les montants bruts par
+     * compte interne, pas la présentation normalisée. Réutilise les mêmes
+     * définitions de lignes que l'affichage écran (app/helpers/ohada.php)
+     * pour que l'export ne puisse jamais diverger de ce qui est montré.
+     */
+    public function financialStatements(Request $request, string $runId): void
+    {
+        $runId = (int) $runId;
+        $run = (new ConsolidationRunRepository())->findById($runId);
+        if (!$run || $run['status'] !== 'completed') {
+            http_response_code(404);
+            $this->view('errors/404', ['title' => 'Run introuvable ou non terminé']);
+            return;
+        }
+
+        $lineItems = (new ConsolidationLineItemRepository())->forRun($runId);
+        $summary = (new ConsolidationService())->computeSummary($lineItems, $runId);
+        $netIncome = $summary['netIncomeFullAgg'];
+
+        $addSection = function (array &$rows, string $title, array $ohadaRows, array $values): void {
+            $rows[] = [$title];
+            $rows[] = ['Référence', 'Libellé', 'Montant XOF'];
+            foreach ($ohadaRows as [$ref, $label, $kind]) {
+                $prefix = $kind === 'total' ? '= ' : ($kind === 'subtotal' ? '- ' : '');
+                $rows[] = [$ref, $prefix . $label, number_format($values[$ref] ?? 0.0, 2, ',', '')];
+            }
+            $rows[] = [];
+        };
+
+        $rows = [];
+        $addSection($rows, 'COMPTE DE RESULTAT CONSOLIDE — ' . $run['period_label'], ohada_income_statement_rows(), ohada_income_statement_values($lineItems));
+        $balanceValues = ohada_balance_sheet_values($lineItems, $netIncome);
+        $addSection($rows, 'BILAN CONSOLIDE — ACTIF', ohada_balance_sheet_actif_rows(), $balanceValues);
+        $addSection($rows, 'BILAN CONSOLIDE — PASSIF', ohada_balance_sheet_passif_rows(), $balanceValues);
+
+        stream_csv_download('liasse_groupe_' . $run['period_label'] . '.csv', $rows);
     }
 
     public function subsidiaryPackage(Request $request, string $subsidiaryId, string $periodId): void

@@ -9,6 +9,8 @@ dynamisme approfondi) — explicitement reportées après V1 par décision utili
 arbre de hiérarchie dynamique, icônes de navigation animées (voir section dédiée ci-dessous).
 **Ajustement UX dashboard (2026-08-12) : TERMINÉ ✅** — tuiles KPI héro symétriques, donut à labels reliés
 (callout), panneaux graphiques à hauteur égale (voir section dédiée ci-dessous).
+**Export CSV de la liasse groupe (2026-08-12) : TERMINÉ ✅** — nouveau bouton exportant le compte de résultat
+et le bilan au format OHADA tel qu'affiché à l'écran (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -295,6 +297,20 @@ empilés) sont désormais côte à côte dans une rangée `.panel-row` (`display
 dédiée nécessaire). La courbe de tendance (12 mois) reste pleine largeur au-dessus : compressée à la moitié de
 la largeur, une série temporelle devient illisible, contrairement à un donut ou un graphique en barres qui
 restent lisibles à taille réduite.
+
+## Export CSV de la liasse groupe (2026-08-12)
+
+Constat utilisateur : le bouton d'export de la page Liasse groupe existait déjà mais exportait les montants
+bruts par compte interne, pas la présentation OHADA (REF, soldes intermédiaires) affichée à l'écran — un
+utilisateur ouvrant l'export ne retrouvait pas ce qu'il voyait sur la page. Ajouté
+`ExportController::financialStatements()` (`/exports/financial-statements/{runId}`, rôles groupe) : exporte le
+compte de résultat + bilan actif + bilan passif **exactement comme affichés**, en 3 sections dans un seul CSV.
+Les définitions de lignes OHADA ont été extraites de `render_ohada_*()` vers des fonctions dédiées
+(`ohada_income_statement_rows()`, `ohada_balance_sheet_actif_rows()`, `ohada_balance_sheet_passif_rows()` dans
+`app/helpers/ohada.php`), réutilisées à la fois par l'affichage écran et par l'export — un seul endroit définit
+la structure, impossible que l'export diverge de l'écran. Le bouton de la page Liasse groupe pointe désormais
+vers ce nouvel export ; l'export brut par compte (`consolidationRun()`) reste inchangé sur l'écran technique
+"Détail du run" où il a plus de sens (audit ligne par ligne). Voir `docs/CONSOLIDATION_LOGIC.md` pour le détail.
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

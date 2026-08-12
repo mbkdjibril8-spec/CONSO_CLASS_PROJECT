@@ -143,10 +143,16 @@ function ohada_render_table(array $rows, array $values): string
     return $html;
 }
 
-function render_ohada_income_statement(array $amounts): string
+/**
+ * Lignes du compte de résultat OHADA (référence/libellé/nature), sans les
+ * valeurs — définition partagée entre l'affichage écran
+ * (render_ohada_income_statement) et l'export CSV (ExportController), pour
+ * qu'un export ne puisse jamais diverger de ce qui est montré à l'écran.
+ * @return array<int, array{0:string,1:string,2:string}>
+ */
+function ohada_income_statement_rows(): array
 {
-    $values = ohada_income_statement_values($amounts);
-    $rows = [
+    return [
         ['TA', 'Ventes de marchandises', 'normal'],
         ['RA', 'Achats de marchandises', 'normal'],
         ['RB', 'Variation de stocks de marchandises', 'normal'],
@@ -190,7 +196,11 @@ function render_ohada_income_statement(array $amounts): string
         ['RS', 'Impôts sur le résultat', 'normal'],
         ['XI', 'RESULTAT NET', 'total'],
     ];
-    return ohada_render_table($rows, $values);
+}
+
+function render_ohada_income_statement(array $amounts): string
+{
+    return ohada_render_table(ohada_income_statement_rows(), ohada_income_statement_values($amounts));
 }
 
 /**
@@ -198,10 +208,10 @@ function render_ohada_income_statement(array $amounts): string
  * pour ce même bilan : les deux tableaux dérivent BU/DV/BZ/DZ de la même base
  * (écart de conversion), sans quoi les deux moitiés du bilan divergeraient.
  */
-function render_ohada_balance_sheet_actif(array $amounts, float $netIncome): string
+/** @return array<int, array{0:string,1:string,2:string}> */
+function ohada_balance_sheet_actif_rows(): array
 {
-    $values = ohada_balance_sheet_values($amounts, $netIncome);
-    $rows = [
+    return [
         ['AD', 'IMMOBILISATIONS INCORPORELLES', 'subtotal'],
         ['AE', 'Frais de développement et de prospection', 'normal'],
         ['AF', 'Brevets, licences, logiciels, droits similaires', 'normal'],
@@ -232,13 +242,22 @@ function render_ohada_balance_sheet_actif(array $amounts, float $netIncome): str
         ['BU', 'Écart de conversion-Actif', 'normal'],
         ['BZ', 'TOTAL GENERAL', 'total'],
     ];
-    return ohada_render_table($rows, $values);
 }
 
-function render_ohada_balance_sheet_passif(array $amounts, float $netIncome): string
+/**
+ * $netIncome DOIT être le même que celui passé à render_ohada_balance_sheet_passif()
+ * pour ce même bilan : les deux tableaux dérivent BU/DV/BZ/DZ de la même base
+ * (écart de conversion), sans quoi les deux moitiés du bilan divergeraient.
+ */
+function render_ohada_balance_sheet_actif(array $amounts, float $netIncome): string
 {
-    $values = ohada_balance_sheet_values($amounts, $netIncome);
-    $rows = [
+    return ohada_render_table(ohada_balance_sheet_actif_rows(), ohada_balance_sheet_values($amounts, $netIncome));
+}
+
+/** @return array<int, array{0:string,1:string,2:string}> */
+function ohada_balance_sheet_passif_rows(): array
+{
+    return [
         ['CA', 'Capital', 'normal'],
         ['CB', 'Apporteurs capital non appelé (-)', 'normal'],
         ['CD', 'Primes liées au capital social', 'normal'],
@@ -268,5 +287,9 @@ function render_ohada_balance_sheet_passif(array $amounts, float $netIncome): st
         ['DV', 'Écart de conversion-Passif', 'normal'],
         ['DZ', 'TOTAL GENERAL', 'total'],
     ];
-    return ohada_render_table($rows, $values);
+}
+
+function render_ohada_balance_sheet_passif(array $amounts, float $netIncome): string
+{
+    return ohada_render_table(ohada_balance_sheet_passif_rows(), ohada_balance_sheet_values($amounts, $netIncome));
 }

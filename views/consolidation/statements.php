@@ -20,7 +20,7 @@
     </div>
     <?php if ($run): ?>
     <div class="no-print">
-        <a href="<?= h(base_url('exports/consolidation/' . $run['id'])) ?>" class="btn btn-outline">Exporter (CSV)</a>
+        <a href="<?= h(base_url('exports/financial-statements/' . $run['id'])) ?>" class="btn btn-outline">Exporter la liasse (CSV)</a>
         <button type="button" class="btn btn-outline" onclick="window.print()">Exporter (PDF)</button>
         <a href="<?= h(base_url('consolidation/' . $run['id'])) ?>" class="btn btn-outline">Détail du run &rarr;</a>
     </div>

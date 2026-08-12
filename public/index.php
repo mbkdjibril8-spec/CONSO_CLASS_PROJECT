@@ -152,6 +152,7 @@ $router->get('/audit', [AuditController::class, 'index'], [$auth, $groupRoles]);
 // --- Exports (Excel/CSV) ---------------------------------------------------------
 $router->get('/exports/dashboard', [ExportController::class, 'dashboard'], [$auth, $allRoles]);
 $router->get('/exports/consolidation/{id}', [ExportController::class, 'consolidationRun'], [$auth, $groupRoles]);
+$router->get('/exports/financial-statements/{runId}', [ExportController::class, 'financialStatements'], [$auth, $groupRoles]);
 $router->get('/exports/financial-data/{subsidiaryId}/{periodId}', [ExportController::class, 'subsidiaryPackage'], [$auth, $allRoles, AuthorizationMiddleware::subsidiaryScope('subsidiaryId')]);
 
 $request = new Request();

@@ -444,3 +444,25 @@ avoid`). Tout navigateur moderne propose "Enregistrer en PDF" comme
 destination d'impression — c'est donc un export PDF complet sans code
 serveur de génération PDF. Appliqué au dashboard CODIR et à la liasse
 groupe, les deux écrans où l'utilisateur a demandé cette fonctionnalité.
+
+## Export CSV de la liasse groupe au format OHADA (2026-08-12)
+
+Constat utilisateur : le bouton "Exporter (CSV)" de la liasse groupe pointait vers `consolidationRun()`
+(`ExportController`), qui exporte les **montants bruts par compte interne** (22 comptes) — pas la présentation
+OHADA (codes REF, soldes intermédiaires de gestion) affichée à l'écran. Un utilisateur ouvrant l'export
+s'attendait logiquement à retrouver ce qu'il voyait sur la page, pas une structure différente.
+
+Corrigé en ajoutant `ExportController::financialStatements()` (route `/exports/financial-statements/{runId}`),
+qui exporte le compte de résultat + bilan actif + bilan passif **exactement comme affichés**, en 3 sections
+dans un seul CSV. Pour garantir que cet export ne puisse jamais diverger de l'écran, les définitions de lignes
+OHADA (référence, libellé, nature normal/sous-total/total) ont été extraites de `render_ohada_*()`
+(`app/helpers/ohada.php`) vers des fonctions dédiées (`ohada_income_statement_rows()`,
+`ohada_balance_sheet_actif_rows()`, `ohada_balance_sheet_passif_rows()`) — un seul endroit définit "quelles
+lignes, dans quel ordre", partagé par l'affichage HTML et l'export CSV. Le bouton de la page Liasse groupe
+(`views/consolidation/statements.php`) a été repointé vers ce nouvel export ; l'export brut par compte
+(`consolidationRun()`) reste inchangé et disponible sur l'écran technique "Détail du run"
+(`/consolidation/{id}`), où il a plus de sens (audit ligne par ligne, pas présentation normalisée).
+
+Vérifié : export du run décembre 2026 — BZ (total actif) = DZ (total passif) = 3 084 176 188,74 XOF et
+XI (résultat net compte de résultat) = CJ (résultat net bilan) = 114 175 717,20 XOF, valeurs identiques à celles
+vérifiées à la main en Phase 5 et affichées à l'écran.
