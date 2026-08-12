@@ -7,6 +7,8 @@ enrichi, ajoutés au périmètre à la demande de l'utilisateur le 2026-08-09).
 dynamisme approfondi) — explicitement reportées après V1 par décision utilisateur.
 **Ajustement post-Phase 8 (2026-08-09) : TERMINÉ ✅** — renommage GROUPFIN → OHADA_CONSO+, correctifs UX dashboard,
 arbre de hiérarchie dynamique, icônes de navigation animées (voir section dédiée ci-dessous).
+**Ajustement UX dashboard (2026-08-12) : TERMINÉ ✅** — tuiles KPI héro symétriques, donut à labels reliés
+(callout), panneaux graphiques à hauteur égale (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -255,6 +257,44 @@ Chaque lien de la barre latérale a désormais une icône SVG dédiée (`nav_ico
 traits simples, `currentColor`, aucune police d'icônes/dépendance externe. Au survol et à l'état actif : icône
 qui change de couleur/s'agrandit légèrement, retrait du lien qui glisse, petit point d'accent animé sur l'item
 actif. `prefers-reduced-motion` respecté (animations désactivées).
+
+### Correctif : cache navigateur sur les assets statiques
+Symptôme rapporté : "les icônes n'ont pas changé". Cause réelle : `app.css` était bien à jour côté serveur
+(vérifié), mais rien n'invalidait le cache du navigateur sur ce fichier statique. Corrigé une fois pour toutes :
+`asset()` (`app/helpers/helpers.php`) ajoute désormais `?v=<filemtime>` à l'URL de chaque asset — un simple F5
+suffit maintenant à voir tout changement CSS/JS, plus besoin de vider le cache manuellement.
+
+## Ajustement UX dashboard (retour utilisateur détaillé, 2026-08-12)
+
+Référence visuelle fournie par l'utilisateur (capture d'un dashboard tiers) : tuiles KPI pleines couleur toutes
+identiques en taille, donuts avec libellés reliés par un trait (callout) plutôt qu'une légende séparée,
+graphiques alignés en rangée. Objectif explicite : "tout doit être symétrique".
+
+### Tuiles KPI "héro"
+Les 5 indicateurs principaux (CA, EBITDA, résultat net, marge EBITDA, marge nette) — auparavant répartis sur
+deux `<div class="kpi-row">` distinctes avec des cartes bordées neutres — sont regroupés en une seule rangée
+`.kpi-hero-row` : fond plein (nuances de la palette orange/vert/graphite, pas 5 couleurs sémantiques
+différentes), `display:grid` avec colonnes égales (`repeat(auto-fit, minmax(150px,1fr))`) plutôt que flex, pour
+que les 5 tuiles se partagent exactement la largeur du panneau quel que soit le nombre affiché (ex. seulement 3
+si la marge n'est pas calculable faute de CA). Le style `.kpi` (bordé, neutre) existant est conservé tel quel
+pour les indicateurs secondaires (situation bilancielle, filiales/utilisateurs) — hiérarchie visuelle
+volontaire entre KPIs "héros" et informations complémentaires, pas une recoloration de tout l'écran.
+
+### Donut à labels reliés (callout), sans légende séparée
+Réécriture de `render_composition_donut()` : chaque part du donut est désormais reliée par un trait coudé
+(polyline SVG) à un libellé placé à l'extérieur du cercle (code filiale + pourcentage), aligné en deux colonnes
+gauche/droite selon la position angulaire de la part — plus de légende séparée sous le graphique. Un algorithme
+simple d'anti-chevauchement (`spreadLabels()`, tri par position verticale + écart minimal forcé) évite que deux
+libellés proches en angle se superposent, traité indépendamment pour chaque côté. Toujours dynamique (bascule
+CA/EBITDA sans rechargement, survol avec infobulle) — seule la présentation des libellés change.
+
+### Symétrie des panneaux graphiques
+Le donut de répartition et le graphique de contribution EBITDA (auparavant deux panneaux pleine largeur
+empilés) sont désormais côte à côte dans une rangée `.panel-row` (`display:grid`, colonnes égales, hauteur
+étirée à l'identique) — repasse à un empilement vertical sur écran étroit (`auto-fit`, pas de media query
+dédiée nécessaire). La courbe de tendance (12 mois) reste pleine largeur au-dessus : compressée à la moitié de
+la largeur, une série temporelle devient illisible, contrairement à un donut ou un graphique en barres qui
+restent lisibles à taille réduite.
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

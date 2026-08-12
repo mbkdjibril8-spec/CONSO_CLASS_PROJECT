@@ -291,10 +291,11 @@ function render_contribution_chart(array $contribution): string
  * Donut de répartition par filiale, avec bascule dynamique entre 2
  * indicateurs (CA / EBITDA) sans rechargement de page — construit à partir
  * du même scorecard que le tableau "Performance par filiale" (une seule
- * source de calcul, voir ReportingService::subsidiaryScorecard()). Les
- * valeurs négatives (filiale en perte) ne sont pas représentables dans un
- * donut (pas de part négative d'un tout) : exclues du tracé, signalées
- * dans la légende.
+ * source de calcul, voir ReportingService::subsidiaryScorecard()). Labels
+ * reliés aux parts par un trait (callout), pas de légende séparée — sur
+ * demande utilisateur (référence visuelle fournie). Les valeurs négatives
+ * (filiale en perte) ne sont pas représentables dans un donut (pas de part
+ * négative d'un tout) : exclues du tracé, signalées sous le graphique.
  * @param array<int, array{subsidiary: \App\Models\Subsidiary, revenue: array, ebitda: array}> $scorecard
  */
 function render_composition_donut(array $scorecard, string $chartId): string
@@ -329,22 +330,21 @@ function render_composition_donut(array $scorecard, string $chartId): string
             <button type="button" class="donut-toggle-btn is-active" data-key="revenue">Chiffre d'affaires</button>
             <button type="button" class="donut-toggle-btn" data-key="ebitda">EBITDA</button>
         </div>
-        <div class="donut-body">
-            <div class="chart-svg-container" style="position:relative">
-                <svg viewBox="0 0 240 240" id="{$chartId}" class="donut-svg"></svg>
-                <div class="chart-tooltip" style="display:none"></div>
-            </div>
-            <div class="donut-legend" id="{$chartId}-legend"></div>
+        <div class="chart-svg-container" style="position:relative">
+            <svg viewBox="0 0 420 300" id="{$chartId}" class="donut-svg"></svg>
+            <div class="chart-tooltip" style="display:none"></div>
         </div>
+        <div class="donut-excluded" id="{$chartId}-excluded"></div>
     </div>
     <script>
     (function() {
         var data = {$dataJson};
         var svg = document.getElementById('{$chartId}');
-        var legend = document.getElementById('{$chartId}-legend');
+        var excludedBox = document.getElementById('{$chartId}-excluded');
         var tooltip = svg.parentElement.querySelector('.chart-tooltip');
         var toggle = svg.closest('.donut-wrap').querySelector('.donut-toggle');
-        var cx = 120, cy = 120, rOuter = 96, rInner = 60;
+        var cx = 175, cy = 150, rOuter = 82, rInner = 50;
+        var minGap = 30;
 
         function polar(r, angle) {
             var rad = (angle - 90) * Math.PI / 180;
@@ -367,6 +367,17 @@ function render_composition_donut(array $scorecard, string $chartId): string
             if (abs >= 1e3) return (v / 1e3).toLocaleString('fr-FR', {maximumFractionDigits: 0}) + ' K';
             return fmtAmount(v);
         }
+        // Écarte les libellés qui se chevaucheraient verticalement, côté
+        // gauche et droit du donut traités indépendamment.
+        function spreadLabels(items) {
+            items.sort(function(a, b) { return a.y - b.y; });
+            for (var i = 1; i < items.length; i++) {
+                if (items[i].y - items[i - 1].y < minGap) {
+                    items[i].y = items[i - 1].y + minGap;
+                }
+            }
+            return items;
+        }
 
         function draw(key) {
             var rows = data[key].rows;
@@ -375,8 +386,8 @@ function render_composition_donut(array $scorecard, string $chartId): string
             var total = positive.reduce(function(s, r) { return s + r.value; }, 0);
 
             var svgParts = [];
-            var legendParts = [];
             var angle = 0;
+            var left = [], right = [];
 
             if (total <= 0) {
                 svgParts.push('<circle cx="' + cx + '" cy="' + cy + '" r="' + rOuter + '" fill="none" stroke="#e2ddd0" stroke-width="' + (rOuter - rInner) + '"/>');
@@ -384,30 +395,37 @@ function render_composition_donut(array $scorecard, string $chartId): string
                 positive.forEach(function(r, i) {
                     var share = r.value / total;
                     var start = angle, end = angle + share * 360;
+                    var mid = (start + end) / 2;
                     angle = end;
-                    svgParts.push('<path d="' + arcPath(start, end) + '" fill="' + r.color + '" class="donut-slice" data-idx="' + i + '" stroke="#fcfcfb" stroke-width="1.5"><title>' + r.name + ' : ' + fmtAmount(r.value) + ' XOF (' + (share * 100).toFixed(1) + '%)</title></path>');
+                    svgParts.push('<path d="' + arcPath(start, end) + '" fill="' + r.color + '" class="donut-slice" data-idx="' + i + '" stroke="#fcfcfb" stroke-width="1.5"/>');
+
+                    var p1 = polar(rOuter + 3, mid);
+                    var p2 = polar(rOuter + 20, mid);
+                    var isRight = p2.x >= cx;
+                    var entry = { r: r, share: share, x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, y: p2.y, isRight: isRight };
+                    (isRight ? right : left).push(entry);
                 });
             }
 
-            svgParts.push('<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" font-size="19" font-weight="700" fill="#241f1a">' + fmtCompact(total) + '</text>');
-            svgParts.push('<text x="' + cx + '" y="' + (cy + 16) + '" text-anchor="middle" font-size="11" fill="#6b6156">' + data[key].label + '</text>');
+            spreadLabels(left);
+            spreadLabels(right);
+            [left, right].forEach(function(side) {
+                side.forEach(function(e) {
+                    var labelX = e.isRight ? cx + rOuter + 46 : cx - rOuter - 46;
+                    svgParts.push('<polyline points="' + e.x1 + ',' + e.y1 + ' ' + e.x2 + ',' + e.y2 + ' ' + labelX + ',' + e.y + '" fill="none" stroke="' + e.r.color + '" stroke-width="1.4"/>');
+                    var anchor = e.isRight ? 'start' : 'end';
+                    var tx = e.isRight ? labelX + 5 : labelX - 5;
+                    svgParts.push('<text x="' + tx + '" y="' + (e.y - 3) + '" text-anchor="' + anchor + '" font-size="11" font-weight="700" fill="#241f1a">' + e.r.code + '</text>');
+                    svgParts.push('<text x="' + tx + '" y="' + (e.y + 10) + '" text-anchor="' + anchor + '" font-size="10" fill="#6b6156">' + (e.share * 100).toFixed(1) + '%</text>');
+                });
+            });
+
+            svgParts.push('<text x="' + cx + '" y="' + (cy - 6) + '" text-anchor="middle" font-size="18" font-weight="700" fill="#241f1a">' + fmtCompact(total) + '</text>');
+            svgParts.push('<text x="' + cx + '" y="' + (cy + 15) + '" text-anchor="middle" font-size="10.5" fill="#6b6156">' + data[key].label + '</text>');
             svg.innerHTML = svgParts.join('');
 
-            positive.forEach(function(r) {
-                var share = total > 0 ? (r.value / total * 100) : 0;
-                legendParts.push('<div class="donut-legend-item"><span class="donut-legend-swatch" style="background:' + r.color + '"></span>' +
-                    '<span class="donut-legend-name">' + r.code + '</span>' +
-                    '<span class="donut-legend-value">' + fmtCompact(r.value) + ' &middot; ' + share.toFixed(1) + '%</span></div>');
-            });
-            excluded.forEach(function(r) {
-                legendParts.push('<div class="donut-legend-item is-excluded"><span class="donut-legend-swatch" style="background:' + r.color + '"></span>' +
-                    '<span class="donut-legend-name">' + r.code + '</span>' +
-                    '<span class="donut-legend-value">' + fmtCompact(r.value) + ' (non représenté)</span></div>');
-            });
-            legend.innerHTML = legendParts.join('');
-
             svg.querySelectorAll('.donut-slice').forEach(function(el) {
-                el.addEventListener('mouseenter', function(evt) {
+                el.addEventListener('mouseenter', function() {
                     var idx = parseInt(el.getAttribute('data-idx'), 10);
                     var r = positive[idx];
                     var share = total > 0 ? (r.value / total * 100) : 0;
@@ -427,6 +445,10 @@ function render_composition_donut(array $scorecard, string $chartId): string
                     el.setAttribute('opacity', '1');
                 });
             });
+
+            excludedBox.innerHTML = excluded.length
+                ? 'Non représenté (valeur négative) : ' + excluded.map(function(r) { return r.code; }).join(', ')
+                : '';
         }
 
         toggle.addEventListener('click', function(evt) {

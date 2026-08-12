@@ -243,6 +243,12 @@ p { margin: 0 0 .75em 0; }
   margin-bottom: 20px;
 }
 
+/* Rangée de 2 panneaux à hauteur égale (grid, pas flex : évite qu'un
+   panneau plus court "flotte" à côté d'un plus grand — symétrie voulue
+   entre graphiques complémentaires, ex. répartition + contribution). */
+.panel-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: stretch; margin-bottom: 20px; }
+.panel-row .panel { margin-bottom: 0; display: flex; flex-direction: column; }
+
 .panel-title {
   font-size: .78rem;
   text-transform: uppercase;
@@ -278,6 +284,56 @@ p { margin: 0 0 .75em 0; }
 .kpi .kpi-delta { font-weight: 600; }
 .kpi .kpi-delta.is-favorable { color: var(--color-positive); }
 .kpi .kpi-delta.is-unfavorable { color: var(--color-negative); }
+
+/* --------------------------------------------------------------------
+   Tuiles KPI "héro" du tableau de bord (bloc principal CA/EBITDA/résultat
+   net/marges) : fond plein, toutes identiques en taille ET en couleur —
+   grid à colonnes égales (pas flex) pour qu'elles se répartissent tout
+   le panneau, quel que soit leur nombre, sans jamais déborder ni laisser
+   un trou. Distinct du style .kpi (bordé, neutre) utilisé pour les
+   indicateurs secondaires — hiérarchie visuelle volontaire.
+   -------------------------------------------------------------------- */
+
+.kpi-hero-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.kpi-hero {
+  background: var(--color-primary);
+  border-radius: var(--radius);
+  padding: 18px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  min-height: 108px;
+  justify-content: center;
+}
+.kpi-hero-value { font-size: 1.65rem; font-weight: 800; color: #fff; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.kpi-hero-suffix { font-size: .68rem; font-weight: 600; opacity: .85; }
+.kpi-hero-label { font-size: .74rem; color: rgba(255,255,255,.92); text-transform: uppercase; letter-spacing: .03em; margin-top: 2px; }
+.kpi-hero-delta {
+  margin-top: 6px;
+  font-size: .68rem;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.16);
+  color: #fff;
+}
+.kpi-hero-delta.is-favorable { background: rgba(31,122,77,.35); }
+.kpi-hero-delta.is-unfavorable { background: rgba(179,42,38,.35); }
+
+/* Nuance chaque tuile pour éviter un bloc de 5 aplats identiques (moins
+   "dynamique") tout en restant dans la palette de marque (orange/vert) —
+   alternance discrète, pas une couleur par sémantique différente. */
+.kpi-hero-row .kpi-hero:nth-child(2) { background: var(--color-primary-hover); }
+.kpi-hero-row .kpi-hero:nth-child(3) { background: var(--color-secondary); }
+.kpi-hero-row .kpi-hero:nth-child(4) { background: var(--color-graphite-2); }
+.kpi-hero-row .kpi-hero:nth-child(5) { background: var(--color-graphite); }
 
 /* --------------------------------------------------------------------
    Graphiques (dashboards Phase 6)
@@ -328,16 +384,9 @@ p { margin: 0 0 .75em 0; }
 .donut-toggle-btn:hover { color: var(--color-text); }
 .donut-toggle-btn.is-active { background: var(--color-primary); color: #fff; }
 
-.donut-body { display: flex; gap: 24px; flex-wrap: wrap; align-items: center; }
-.donut-svg { width: 240px; height: 240px; flex: 0 0 240px; overflow: visible; }
+.donut-svg { width: 100%; max-width: 420px; height: auto; display: block; margin: 0 auto; overflow: visible; }
 .donut-slice { cursor: pointer; transition: opacity .12s ease; }
-
-.donut-legend { flex: 1 1 220px; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
-.donut-legend-item { display: flex; align-items: center; gap: 8px; font-size: .82rem; color: var(--color-text); }
-.donut-legend-item.is-excluded { opacity: .55; }
-.donut-legend-swatch { width: 11px; height: 11px; border-radius: 3px; flex: 0 0 11px; }
-.donut-legend-name { font-weight: 600; min-width: 62px; }
-.donut-legend-value { color: var(--color-text-muted); font-variant-numeric: tabular-nums; margin-left: auto; }
+.donut-excluded { margin-top: 6px; text-align: center; font-size: .74rem; color: var(--color-text-faint); min-height: 1em; }
 
 /* --------------------------------------------------------------------
    Alertes du dashboard CODIR
@@ -647,7 +696,8 @@ td.num, th.num { text-align: right; }
   .print-header-brand { font-size: 1.3rem; font-weight: 800; letter-spacing: .04em; }
   .print-header-meta { color: #555; font-size: .82rem; margin-top: 2px; }
   .panel { border: 1px solid #ccc; box-shadow: none; break-inside: avoid; }
-  .kpi-row { break-inside: avoid; }
+  .kpi-row, .kpi-hero-row, .panel-row { break-inside: avoid; }
+  .kpi-hero, .kpi-hero * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   a[href]::after { content: ""; }
 }
 

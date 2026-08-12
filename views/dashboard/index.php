@@ -4,19 +4,15 @@
  * les rôles groupe ; vue filiale pour préparateur/contrôleur. Toutes les
  * données proviennent de ReportingService (aucune valeur en dur).
  */
-$renderKpi = function (string $label, array $kpi, string $chartId) {
-    $deltaClass = $kpi['favorable'] ? 'is-favorable' : 'is-unfavorable';
-    $arrow = $kpi['variance'] >= 0 ? '&uarr;' : '&darr;';
+$renderKpiHero = function (string $label, string $value, ?array $kpi = null, ?string $suffix = null) {
     ?>
-    <div class="kpi">
-        <div class="kpi-label"><?= h($label) ?></div>
-        <div class="kpi-value"><?= format_compact_amount($kpi['actual']) ?> <span class="text-faint" style="font-size:.7rem">XOF</span></div>
-        <div class="kpi-sub">
-            Budget <?= format_compact_amount($kpi['budget']) ?>
-            <?php if ($kpi['variancePct'] !== null): ?>
-                &middot; <span class="kpi-delta <?= $deltaClass ?>"><?= $arrow ?> <?= number_format(abs($kpi['variancePct']), 1, ',', ' ') ?>%</span>
-            <?php endif; ?>
-        </div>
+    <div class="kpi-hero">
+        <div class="kpi-hero-value"><?= $value ?><?php if ($suffix): ?> <span class="kpi-hero-suffix"><?= h($suffix) ?></span><?php endif; ?></div>
+        <div class="kpi-hero-label"><?= h($label) ?></div>
+        <?php if ($kpi !== null && $kpi['variancePct'] !== null): ?>
+            <?php $deltaClass = $kpi['favorable'] ? 'is-favorable' : 'is-unfavorable'; ?>
+            <span class="kpi-hero-delta <?= $deltaClass ?>"><?= $kpi['variance'] >= 0 ? '&uarr;' : '&darr;' ?> <?= number_format(abs($kpi['variancePct']), 1, ',', ' ') ?>% vs budget</span>
+        <?php endif; ?>
     </div>
     <?php
 };
@@ -104,29 +100,20 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
 <?php endif; ?>
 
 <?php if (isset($kpis)): ?>
-    <div class="kpi-row">
-        <?php $renderKpi("Chiffre d'affaires", $kpis['revenue'], 'kpi-rev'); ?>
-        <?php $renderKpi('EBITDA', $kpis['ebitda'], 'kpi-ebitda'); ?>
-        <?php $renderKpi('Résultat net', $kpis['netIncome'], 'kpi-ni'); ?>
-    </div>
-
     <?php
     $rev = $kpis['revenue']['actual'];
     $ebitdaMarginPct = $rev != 0.0 ? ($kpis['ebitda']['actual'] / $rev) * 100 : null;
     $netMarginPct = $rev != 0.0 ? ($kpis['netIncome']['actual'] / $rev) * 100 : null;
     ?>
-    <?php if ($ebitdaMarginPct !== null): ?>
-    <div class="kpi-row" style="margin-top:-10px">
-        <div class="kpi">
-            <div class="kpi-label">Marge EBITDA</div>
-            <div class="kpi-value"><?= number_format($ebitdaMarginPct, 1, ',', ' ') ?> %</div>
-        </div>
-        <div class="kpi">
-            <div class="kpi-label">Marge nette</div>
-            <div class="kpi-value"><?= number_format($netMarginPct, 1, ',', ' ') ?> %</div>
-        </div>
+    <div class="kpi-hero-row">
+        <?php $renderKpiHero("Chiffre d'affaires", format_compact_amount($kpis['revenue']['actual']), $kpis['revenue'], 'XOF'); ?>
+        <?php $renderKpiHero('EBITDA', format_compact_amount($kpis['ebitda']['actual']), $kpis['ebitda'], 'XOF'); ?>
+        <?php $renderKpiHero('Résultat net', format_compact_amount($kpis['netIncome']['actual']), $kpis['netIncome'], 'XOF'); ?>
+        <?php if ($ebitdaMarginPct !== null): ?>
+            <?php $renderKpiHero('Marge EBITDA', number_format($ebitdaMarginPct, 1, ',', ' '), null, '%'); ?>
+            <?php $renderKpiHero('Marge nette', number_format($netMarginPct, 1, ',', ' '), null, '%'); ?>
+        <?php endif; ?>
     </div>
-    <?php endif; ?>
 
     <?php if (isset($balanceSheetSummary)): ?>
     <div class="panel">
@@ -173,17 +160,20 @@ $renderKpi = function (string $label, array $kpi, string $chartId) {
 
 <?php if ($user->isGroupLevel()): ?>
 
-    <?php if (!empty($scorecard)): ?>
-        <div class="panel">
-            <div class="panel-title">Répartition par filiale — <?= h($period->label) ?></div>
-            <?= render_composition_donut($scorecard, 'donut-repartition') ?>
-        </div>
-    <?php endif; ?>
-
-    <?php if (!empty($contribution)): ?>
-        <div class="panel">
-            <div class="panel-title">Contribution EBITDA par filiale — <?= h($period->label) ?></div>
-            <?= render_contribution_chart($contribution) ?>
+    <?php if (!empty($scorecard) || !empty($contribution)): ?>
+        <div class="panel-row">
+            <?php if (!empty($scorecard)): ?>
+                <div class="panel">
+                    <div class="panel-title">Répartition par filiale — <?= h($period->label) ?></div>
+                    <?= render_composition_donut($scorecard, 'donut-repartition') ?>
+                </div>
+            <?php endif; ?>
+            <?php if (!empty($contribution)): ?>
+                <div class="panel">
+                    <div class="panel-title">Contribution EBITDA par filiale — <?= h($period->label) ?></div>
+                    <?= render_contribution_chart($contribution) ?>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
