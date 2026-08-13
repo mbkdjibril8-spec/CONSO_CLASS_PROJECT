@@ -14,6 +14,9 @@ et le bilan au format OHADA tel qu'affiché à l'écran (voir section dédiée c
 **Bascule automatique d'exercice (2026-08-12) : TERMINÉ ✅** — l'année N+1 s'ouvre automatiquement (12 périodes
 + taux de change repris) dès que les 12 mois de l'année N sont clôturés ; fonctionnalité absente jusqu'ici,
 signalée par une question directe de l'utilisateur (voir section dédiée ci-dessous).
+**Guide de test complet (2026-08-13) : TERMINÉ ✅** — `GUIDE_DE_TEST.md`, parcours pas à pas de la connexion
+jusqu'aux états financiers consolidés et au reporting annuel, chaque étape rejouée et vérifiée en conditions
+réelles avant livraison (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -348,6 +351,22 @@ réelles (12 clôtures via l'endpoint HTTP réel, pas un bypass) — voir DoD ci
 - Dashboard testé sur une période 2027 (`period_id` de janvier 2027) : aucune erreur, écran vide comme attendu
   (aucune donnée financière encore saisie pour ce nouvel exercice).
 - Base de démonstration remise à l'état de départ après test (2026 seul, statuts d'origine, aucun run).
+
+## Guide de test complet (2026-08-13)
+
+`GUIDE_DE_TEST.md` (nouveau, racine du dépôt) : parcours de test séquentiel, en français, de la connexion
+jusqu'aux états financiers consolidés et au reporting annuel — connexion → structure de groupe → périodes →
+taux de change → saisie + workflow (cycle complet soumission/rejet/resoumission/validation sur le Maroc,
+volontairement laissé en brouillon dans le scénario de démo) → validation des 5 autres filiales → intercompany
+→ lancement de la consolidation → liasse groupe (états financiers OHADA + exports CSV/PDF) → dashboard CODIR →
+Budget vs Actual → notifications → journal d'audit → bascule d'exercice (optionnel, approfondi). Chaque étape
+a été rejouée manuellement via HTTP réel avant livraison (pas rédigée puis supposée correcte) — un bug de
+méthodologie de test a été trouvé et corrigé au passage : un jeton CSRF périmé provoquait un faux échec sur la
+soumission d'un paquet dans mon script de vérification (rien à voir avec l'application elle-même, qui
+fonctionne normalement dans un navigateur où chaque page chargée a son propre jeton frais).
+
+Distinct de `USER_MANUAL.md` (référence exhaustive écran par écran) : ce guide est un script à dérouler dans
+l'ordre, avec des cases à cocher, pas une documentation de référence.
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

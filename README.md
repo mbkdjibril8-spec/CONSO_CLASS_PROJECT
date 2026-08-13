@@ -58,6 +58,7 @@ Le workflow, le RBAC et le pipeline de consolidation sont couverts par le protoc
 
 - [`docs/CONSOLIDATION_LOGIC.md`](docs/CONSOLIDATION_LOGIC.md) — logique métier détaillée : formules, conventions de signe, choix de conception et bugs corrigés (utile pour comprendre *pourquoi*, pas seulement *quoi*).
 - [`USER_MANUAL.md`](USER_MANUAL.md) — manuel utilisateur par rôle.
+- [`GUIDE_DE_TEST.md`](GUIDE_DE_TEST.md) — parcours de test guidé, de la connexion jusqu'aux états financiers consolidés et au reporting annuel.
 - [`TECHNICAL_DOCUMENTATION.md`](TECHNICAL_DOCUMENTATION.md) — architecture, structure du code, sécurité.
 - [`PROJECT_STATE.md`](PROJECT_STATE.md) — état d'avancement, décisions produit, vérifications exécutées phase par phase.
 
