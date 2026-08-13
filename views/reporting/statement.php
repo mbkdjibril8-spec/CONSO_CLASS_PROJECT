@@ -1,6 +1,11 @@
 <?php
 /** État financier au format normalisé OHADA/SYCEBNL (lecture seule). */
 ?>
+<?= render_breadcrumb([
+    ['Données financières', 'financial-data/' . $subsidiary->id],
+    [$period->label, 'financial-data/' . $subsidiary->id . '/' . $period->id],
+    ['États financiers', null],
+]) ?>
 <div class="page-header">
     <div>
         <h1><?= h($subsidiary->name) ?></h1>

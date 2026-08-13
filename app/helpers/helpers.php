@@ -259,3 +259,33 @@ function role_label(string $code): string
     ];
     return $labels[$code] ?? $code;
 }
+
+/**
+ * Fil d'Ariane des écrans de détail : chaque entrée est [libellé, url] pour
+ * un lien, ou [libellé, null] pour l'élément courant (dernier maillon).
+ * Rend l'utilisateur capable de remonter d'un cran sans passer par le menu
+ * latéral, et de savoir où il se trouve dans l'arborescence.
+ * @param array<int, array{0:string, 1:string|null}> $items
+ */
+function render_breadcrumb(array $items): string
+{
+    if (empty($items)) {
+        return '';
+    }
+    $arrow = '<svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>';
+
+    $html = '<nav class="breadcrumb no-print" aria-label="Fil d\'Ariane">';
+    $last = count($items) - 1;
+    foreach ($items as $i => [$label, $url]) {
+        if ($i > 0) {
+            $html .= '<span class="sep" aria-hidden="true">/</span>';
+        }
+        if ($url !== null) {
+            // Chevron uniquement sur le premier lien : c'est celui qui sert de "retour".
+            $html .= '<a href="' . h(base_url($url)) . '">' . ($i === 0 ? $arrow : '') . h($label) . '</a>';
+        } else {
+            $html .= '<span class="current"' . ($i === $last ? ' aria-current="page"' : '') . '>' . h($label) . '</span>';
+        }
+    }
+    return $html . '</nav>';
+}

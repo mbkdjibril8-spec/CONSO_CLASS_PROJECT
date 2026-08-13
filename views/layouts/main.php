@@ -21,6 +21,7 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
     <link rel="stylesheet" href="<?= h(asset('css/app.css')) ?>">
 </head>
 <body>
+<a href="#contenu-principal" class="skip-link">Aller au contenu principal</a>
 <div class="app-shell">
     <header class="app-topbar">
         <div class="brand">OHADA_CONSO+ <span>· NOVA AFRICA GROUP</span></div>
@@ -66,7 +67,7 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
     </aside>
     <?php endif; ?>
 
-    <main class="app-main" style="<?= $user ? '' : 'margin-left:0;width:100%;' ?>">
+    <main class="app-main" id="contenu-principal" tabindex="-1" style="<?= $user ? '' : 'margin-left:0;width:100%;' ?>">
         <?php foreach ($flashes as $type => $messages): foreach ($messages as $message): ?>
             <div class="alert alert-<?= h($type) ?>"><?= h($message) ?></div>
         <?php endforeach; endforeach; ?>
@@ -83,6 +84,26 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
  * synchronisée (retour arrière / rechargement restent corrects).
  */
 (function () {
+    /**
+     * Un <script> inséré via innerHTML n'est JAMAIS exécuté par le navigateur
+     * (marqué non-exécutable à l'analyse). Sans cette ré-injection, tous les
+     * comportements interactifs portés par un script du fragment (survol des
+     * graphiques, bascule du donut, bascule Mois/Cumul de Budget vs Actual)
+     * mouraient silencieusement au premier changement de filtre — la page
+     * s'affichait correctement, mais ne réagissait plus. On recrée donc chaque
+     * script pour qu'il s'exécute réellement.
+     */
+    function runScripts(root) {
+        root.querySelectorAll('script').forEach(function (old) {
+            var script = document.createElement('script');
+            for (var i = 0; i < old.attributes.length; i++) {
+                script.setAttribute(old.attributes[i].name, old.attributes[i].value);
+            }
+            script.textContent = old.textContent;
+            old.replaceWith(script);
+        });
+    }
+
     function swap(url, pushState) {
         var container = document.getElementById('ajax-content');
         if (!container) { window.location.href = url; return; }
@@ -92,8 +113,9 @@ $unreadNotifications = $user ? (new NotificationRepository())->unreadCount($user
             .then(function (html) {
                 var tmp = document.createElement('div');
                 tmp.innerHTML = html;
-                var fresh = tmp.querySelector('#ajax-content');
-                container.replaceWith(fresh || tmp);
+                var fresh = tmp.querySelector('#ajax-content') || tmp;
+                container.replaceWith(fresh);
+                runScripts(fresh);
                 if (pushState) { window.history.pushState({ ajax: true }, '', url); }
             })
             .catch(function () { window.location.href = url; });

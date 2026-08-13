@@ -31,6 +31,11 @@ $renderRow = function ($account) use ($rawAmounts, $errors, $canEdit) {
     <?php
 };
 ?>
+<?= render_breadcrumb([
+    ['Données financières', 'financial-data/' . $subsidiary->id],
+    [$subsidiary->code, null],
+    [$period->label, null],
+]) ?>
 <div class="page-header">
     <div>
         <h1><?= h($subsidiary->name) ?> — <?= h($period->label) ?></h1>

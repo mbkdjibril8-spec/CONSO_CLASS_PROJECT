@@ -2,6 +2,9 @@
 /** Fiche filiale. Actions de gestion (modifier/activer-désactiver) réservées à l'administrateur groupe. */
 $isAdmin = $user->roleCode === \App\Models\Role::GROUP_ADMIN;
 ?>
+<?php if ($user->isGroupLevel()): ?>
+    <?= render_breadcrumb([['Filiales', 'subsidiaries'], [$subsidiary->code, null]]) ?>
+<?php endif; ?>
 <div class="page-header">
     <div>
         <h1><?= h($subsidiary->name) ?></h1>

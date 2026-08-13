@@ -128,6 +128,10 @@ rôles groupe reçoivent une notification "Exercice ouvert" à ce moment-là. Au
 
 `Budget vs Actual` (menu latéral) — tableau détaillé par compte, mois sélectionné et cumul depuis janvier (YTD), avec écart et écart % (sens favorable/défavorable adapté selon qu'il s'agit d'un produit ou d'une charge).
 
+- Trois **tuiles de synthèse** en haut (chiffre d'affaires, EBITDA, résultat net du mois) donnent la lecture d'ensemble avant le détail.
+- Boutons **Mois + Cumul / Mois seul / Cumul seul** : masquent les colonnes non voulues instantanément (pratique sur écran étroit ou en projection).
+- Dans la colonne Écart %, une **barre proportionnelle** indique l'ampleur de l'écart (saturée au-delà de 30 %) en plus de la couleur et de la flèche.
+
 ## 12. Notifications
 
 Icône cloche dans la barre supérieure (badge = nombre de notifications non lues). Événements notifiés : soumission d'un paquet, rejet, écart intercompany détecté, consolidation terminée (rôles groupe uniquement pour ce dernier).

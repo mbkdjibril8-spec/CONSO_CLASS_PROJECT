@@ -17,6 +17,9 @@ signalée par une question directe de l'utilisateur (voir section dédiée ci-de
 **Guide de test complet (2026-08-13) : TERMINÉ ✅** — `GUIDE_DE_TEST.md`, parcours pas à pas de la connexion
 jusqu'aux états financiers consolidés et au reporting annuel, chaque étape rejouée et vérifiée en conditions
 réelles avant livraison (voir section dédiée ci-dessous).
+**Refonte UX Budget vs Actual + passe user-friendly globale (2026-08-13) : TERMINÉ ✅** — tableau symétrique et
+filtrable dynamiquement, correction d'un bug JS qui tuait toutes les interactions après un filtre AJAX,
+navigation (fil d'Ariane), accessibilité clavier, responsive (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -367,6 +370,49 @@ fonctionne normalement dans un navigateur où chaque page chargée a son propre 
 
 Distinct de `USER_MANUAL.md` (référence exhaustive écran par écran) : ce guide est un script à dérouler dans
 l'ordre, avec des cases à cocher, pas une documentation de référence.
+
+## Refonte UX Budget vs Actual + passe user-friendly globale (2026-08-13)
+
+### Budget vs Actual
+- **Symétrie du tableau** : `table-layout: fixed` + largeur fixée sur la seule colonne "Compte". En disposition
+  fixe, seules les largeurs de la première ligne comptent : les deux en-têtes de groupe (`colspan=4` Mois et
+  Cumul) se partagent donc à parts strictement égales l'espace restant, et chacun le redivise en 4 — les deux
+  blocs deviennent des miroirs exacts l'un de l'autre, ce qui était impossible en dimensionnement automatique
+  (chaque colonne se calait sur son contenu, les deux moitiés ne s'alignaient jamais).
+- **Bascule dynamique Mois / Cumul / les deux** : boutons masquant les colonnes du groupe non retenu, sans
+  requête ni rechargement (les deux jeux de données sont déjà dans la page). Utile sur écran étroit et en
+  projection, où 9 colonnes sont illisibles.
+- **Tuiles de synthèse** en haut (CA, EBITDA, résultat net du mois + écart vs budget), pour donner la lecture
+  d'ensemble avant le détail ligne par ligne — même style que les tuiles héro du dashboard, cohérence voulue.
+- **Barre d'ampleur d'écart** dans les cellules Écart % : la couleur seule (vert/rouge) indique le sens mais pas
+  l'importance ; une barre proportionnelle (saturée à 30 %) rend le classement visuel immédiat. La couleur n'est
+  jamais le seul signal (flèche ↑/↓ + valeur chiffrée conservées) — lisible en cas de déficience de perception
+  des couleurs.
+- Séparateur vertical net entre les deux groupes, budget en gris recessif (c'est une référence, pas une mesure),
+  lignes de sous-total sur fond distinct, conteneur à défilement horizontal propre.
+
+### Bug corrigé : toutes les interactions mouraient après un filtre AJAX
+En testant la nouvelle bascule, découverte d'un bug latent **antérieur** : un `<script>` inséré via `innerHTML`
+n'est jamais exécuté par le navigateur (marqué non-exécutable à l'analyse). La couche de filtres dynamiques
+(`views/layouts/main.php`) remplaçait `#ajax-content` par du HTML parsé en `innerHTML` — donc **dès le premier
+changement de filtre**, le survol de la courbe de tendance et la bascule CA/EBITDA du donut cessaient de
+fonctionner silencieusement (la page s'affichait correctement, elle ne réagissait simplement plus). Corrigé une
+fois pour toutes dans `swap()` : chaque `<script>` du fragment est recréé après insertion pour s'exécuter
+réellement. Bénéficie à tous les écrans, présents et futurs.
+
+### Passe user-friendly globale
+- **Fil d'Ariane** (`render_breadcrumb()`, `app/helpers/helpers.php`) sur les écrans de détail (fiche filiale,
+  saisie d'un paquet, état financier filiale, run de consolidation) : l'utilisateur sait où il est et remonte
+  d'un cran sans repasser par le menu. Répond à la demande "boutons de retour" formulée le 2026-08-09 et
+  explicitement reportée après la Phase 8.
+- **Accessibilité clavier** : seuls les champs de saisie avaient un état focus — boutons, liens et onglets
+  n'en avaient aucun, rendant la navigation au clavier littéralement invisible. Anneau de focus global via
+  `:focus-visible` (pas `:focus`, pour ne pas l'afficher au clic souris), + lien d'évitement "Aller au contenu
+  principal" en premier élément focalisable.
+- **Responsive de l'application** : la sidebar était en position fixe à 210px avec un contenu décalé d'autant,
+  sans aucune règle d'adaptation — sur tablette/portable étroit/projection, le contenu était comprimé. Elle
+  bascule désormais en bandeau horizontal défilable sous la topbar (< 900px), les grilles repassent en une
+  colonne, les tuiles KPI se réorganisent en 2 colonnes (< 560px).
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

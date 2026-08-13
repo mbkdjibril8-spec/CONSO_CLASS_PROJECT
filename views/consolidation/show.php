@@ -11,6 +11,7 @@ $runLabel = ['completed' => 'Terminé', 'failed' => 'Échoué', 'running' => 'En
 $acc = fn (string $code) => $accounts[$code]->label ?? $code;
 $val = fn (string $code) => $lineItems[$code] ?? 0.0;
 ?>
+<?= render_breadcrumb([['Consolidation', 'consolidation'], ['Run ' . $run['period_label'], null]]) ?>
 <div class="page-header">
     <div>
         <h1>Run de consolidation — <?= h($run['period_label']) ?></h1>

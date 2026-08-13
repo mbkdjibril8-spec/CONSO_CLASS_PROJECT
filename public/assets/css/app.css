@@ -224,12 +224,81 @@ p { margin: 0 0 .75em 0; }
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
   margin-bottom: 18px;
   border-bottom: 1px solid var(--color-border);
   padding-bottom: 12px;
 }
 
 .page-header .subtitle { color: var(--color-text-muted); font-size: .85rem; }
+
+/* --------------------------------------------------------------------
+   Fil d'Ariane / retour — repère de navigation permanent : sur les écrans
+   de détail (une filiale, un run, un paquet), l'utilisateur doit toujours
+   savoir où il est et pouvoir remonter d'un cran sans passer par le menu.
+   -------------------------------------------------------------------- */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  font-size: .8rem;
+  color: var(--color-text-faint);
+  margin-bottom: 10px;
+}
+.breadcrumb a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--color-text-muted);
+  padding: 2px 7px;
+  margin-left: -7px;
+  border-radius: var(--radius);
+  transition: background .12s ease, color .12s ease;
+}
+.breadcrumb a:hover { background: var(--color-primary-bg); color: var(--color-primary); text-decoration: none; }
+.breadcrumb .sep { color: var(--color-border-strong); }
+.breadcrumb .current { color: var(--color-text); font-weight: 600; }
+
+/* --------------------------------------------------------------------
+   Accessibilité clavier : sans focus visible, un utilisateur au clavier
+   navigue à l'aveugle. Les champs de saisie avaient déjà un état focus,
+   pas les boutons/liens/onglets — corrigé ici de façon globale.
+   :focus-visible plutôt que :focus pour ne pas afficher l'anneau lors
+   d'un simple clic souris.
+   -------------------------------------------------------------------- */
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+.app-topbar a:focus-visible,
+.app-topbar button:focus-visible,
+.app-sidebar a:focus-visible {
+  outline-color: #fff;
+}
+
+/* Lien d'évitement : premier élément focalisable de la page, invisible
+   jusqu'à ce qu'il reçoive le focus au clavier. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 0 0 var(--radius) 0;
+  font-size: .85rem;
+  font-weight: 600;
+}
+.skip-link:focus { left: 0; text-decoration: none; }
 
 /* --------------------------------------------------------------------
    Cartes / sections
@@ -434,6 +503,103 @@ tbody td {
 tbody tr { transition: background .1s ease; }
 tbody tr:hover { background: var(--color-surface-alt); }
 td.num, th.num { text-align: right; }
+
+/* Conteneur de défilement horizontal pour les tableaux larges : évite que
+   la page entière défile latéralement sur petit écran (le tableau seul le
+   fait, le reste de la mise en page reste stable). */
+.table-scroll { overflow-x: auto; }
+
+/* --------------------------------------------------------------------
+   Budget vs Actual — tableau à deux groupes de colonnes (Mois / Cumul)
+   -------------------------------------------------------------------- */
+
+.bva-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.bva-scope-toggle {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 3px;
+}
+.bva-scope-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease;
+}
+.bva-scope-btn:hover { color: var(--color-text); }
+.bva-scope-btn.is-active { background: var(--color-primary); color: #fff; }
+
+/* table-layout:fixed : sans cela chaque colonne se dimensionne sur son
+   contenu, et les deux groupes Mois/Cumul — qui portent pourtant les mêmes
+   4 mesures — n'ont pas la même largeur, ce qui casse la lecture en miroir.
+   En disposition fixe, seules les largeurs de la PREMIÈRE ligne comptent :
+   les deux en-têtes de groupe (colspan=4) se partagent donc à parts égales
+   l'espace restant après la colonne "Compte", et chacun le redivise en 4 —
+   symétrie parfaite obtenue sans fixer la largeur de chaque colonne. */
+.bva-table { table-layout: fixed; min-width: 940px; }
+.bva-table .bva-account-col { width: 210px; text-align: left; }
+
+.bva-group-head {
+  text-align: center !important;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 700;
+}
+/* Séparation visuelle entre le groupe Mois et le groupe Cumul, sur la
+   première colonne "Cumul" de chaque rangée. Positions : ligne 1 d'en-tête
+   = [compte(rowspan), Mois, Cumul] ; ligne 2 = [4 Mois, 4 Cumul] (pas de
+   cellule compte, couverte par le rowspan) ; corps = [compte, 4 Mois, 4 Cumul]. */
+.bva-table thead tr:first-child th:nth-child(3),
+.bva-table thead tr:nth-child(2) th:nth-child(5),
+.bva-table tbody td:nth-child(6) { border-left: 2px solid var(--color-border-strong); }
+
+/* Le budget est une référence, pas une mesure : recessif face au réel. */
+.bva-table .bva-budget { color: var(--color-text-muted); }
+
+.bva-subtotal { font-weight: 700; background: var(--color-surface-alt); }
+.bva-subtotal td { border-top: 1px solid var(--color-border-strong); }
+.bva-table tbody tr:hover { background: var(--color-primary-bg); }
+
+/* Cellule d'écart : barre d'ampleur + pourcentage, empilés et alignés à
+   droite pour que les pourcentages restent lisibles en colonne. */
+.bva-variance-cell { white-space: nowrap; }
+.bva-bar-track {
+  display: block;
+  height: 3px;
+  width: 100%;
+  background: var(--color-border);
+  border-radius: 2px;
+  margin-bottom: 3px;
+  overflow: hidden;
+}
+.bva-bar {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  margin-left: auto;
+  transition: width .25s ease;
+}
+.bva-bar.is-favorable { background: var(--color-positive); }
+.bva-bar.is-unfavorable { background: var(--color-negative); }
+
+.bva-table.hide-month .col-month,
+.bva-table.hide-ytd .col-ytd { display: none; }
+.bva-table.hide-month, .bva-table.hide-ytd { min-width: 0; }
+.bva-table.hide-month .col-ytd,
+.bva-table.hide-ytd .col-month { border-left: none; }
 
 /* --------------------------------------------------------------------
    Badges de statut / méthode
@@ -645,6 +811,57 @@ td.num, th.num { text-align: right; }
 @media (max-width: 860px) {
   .auth-brand-side { display: none; }
   .auth-form-side { flex: 1 1 100%; }
+}
+
+/* --------------------------------------------------------------------
+   Responsive de l'application. La sidebar était en position fixe à 210px
+   avec un .app-main décalé d'autant : sur un écran étroit (tablette,
+   portable 13" avec zoom, projection en réunion) le contenu se retrouvait
+   comprimé sans aucune adaptation. La sidebar passe donc en bandeau
+   horizontal défilable au-dessus du contenu, et les grilles repassent en
+   une colonne.
+   -------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .app-sidebar {
+    position: static;
+    width: 100%;
+    padding: 0;
+    margin-top: 52px;
+    border-bottom: 1px solid var(--color-graphite);
+  }
+  .app-sidebar nav {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .app-sidebar nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    padding: 11px 14px;
+  }
+  .app-sidebar nav a:hover { padding-left: 14px; }
+  .app-sidebar nav a.active { border-left-color: transparent; border-bottom-color: var(--color-primary); }
+  .app-sidebar nav a.active::after { display: none; }
+
+  .app-main { margin-left: 0; margin-top: 0; width: 100%; padding: 18px 16px; }
+
+  .app-topbar { padding: 0 12px; }
+  .app-topbar .brand span { display: none; }
+  .app-topbar .session-info span { display: none; }
+
+  .page-header { align-items: flex-start; flex-direction: column; }
+  .panel-row { grid-template-columns: 1fr; }
+  .kpi-hero-row { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
+  .kpi { max-width: none; }
+}
+
+@media (max-width: 560px) {
+  .kpi-hero-row { grid-template-columns: repeat(2, 1fr); }
+  .kpi-hero-value { font-size: 1.35rem; }
+  .bva-toolbar { flex-direction: column; align-items: flex-start; }
 }
 
 .text-muted { color: var(--color-text-muted); }
