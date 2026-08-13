@@ -11,6 +11,9 @@ arbre de hiérarchie dynamique, icônes de navigation animées (voir section dé
 (callout), panneaux graphiques à hauteur égale (voir section dédiée ci-dessous).
 **Export CSV de la liasse groupe (2026-08-12) : TERMINÉ ✅** — nouveau bouton exportant le compte de résultat
 et le bilan au format OHADA tel qu'affiché à l'écran (voir section dédiée ci-dessous).
+**Bascule automatique d'exercice (2026-08-12) : TERMINÉ ✅** — l'année N+1 s'ouvre automatiquement (12 périodes
++ taux de change repris) dès que les 12 mois de l'année N sont clôturés ; fonctionnalité absente jusqu'ici,
+signalée par une question directe de l'utilisateur (voir section dédiée ci-dessous).
 
 ## Installation
 - Racine du projet : `C:\xampp\htdocs\groupfin`
@@ -311,6 +314,40 @@ Les définitions de lignes OHADA ont été extraites de `render_ohada_*()` vers 
 la structure, impossible que l'export diverge de l'écran. Le bouton de la page Liasse groupe pointe désormais
 vers ce nouvel export ; l'export brut par compte (`consolidationRun()`) reste inchangé sur l'écran technique
 "Détail du run" où il a plus de sens (audit ligne par ligne). Voir `docs/CONSOLIDATION_LOGIC.md` pour le détail.
+
+## Bascule automatique d'exercice (2026-08-12)
+
+Question directe de l'utilisateur : "as-tu géré les années ?" — vérification faite, la réponse était non :
+aucun code nulle part ne créait l'année suivante, seul 2026 était seedé. Construit avec deux décisions
+utilisateur : (1) déclenchement **automatique** dès que les 12 mois d'une année sont tous `closed` (pas un
+bouton manuel) ; (2) taux de change de la nouvelle année **pré-remplis** avec les derniers taux connus
+(décembre de l'année qui se termine), pour ne pas bloquer la première saisie filiale en devise étrangère.
+
+Implémenté dans `PeriodService::advance()` → `maybeOpenNextFiscalYear()` (déclenché après toute transition
+vers `closed`, vérifie par comptage que les 12 mois de l'année le sont — pas seulement "décembre vient de se
+clôturer", puisque rien n'impose de clôturer les mois dans l'ordre calendaire dans ce modèle). Garde
+d'idempotence pour ne jamais recréer l'année suivante deux fois. Notification `fiscal_year_opened` aux rôles
+groupe, entrée `audit_logs` dédiée. Budgets et données financières volontairement non recopiés (nouvel
+exercice = nouvelles données ; les budgets relèvent d'un processus de préparation distinct). Voir
+`docs/CONSOLIDATION_LOGIC.md` §"Bascule automatique d'exercice" pour le détail complet et les vérifications.
+
+Nouveaux tests unitaires (`tests/ReportingPeriodTest.php`, 4 tests, logique pure) : format du libellé
+`ReportingPeriod::labelFor()` (zéro-padding du mois, y compris à la bascule d'année), enchaînement complet de
+`nextStatus()`. La création effective (DB, taux, notification) a été vérifiée manuellement en conditions
+réelles (12 clôtures via l'endpoint HTTP réel, pas un bypass) — voir DoD ci-dessous.
+
+## Vérifications exécutées (DoD — bascule d'exercice)
+- 24 → 28 tests unitaires, tous réussis (`php tests/run.php`).
+- Clôture réelle des 12 mois de 2026 via `/periods/{id}/transition` (endpoint HTTP réel, authentifié
+  Administrateur groupe) : les 12 périodes 2027 apparaissent automatiquement (statut `open`), label correct
+  (`2027-01` … `2027-12`).
+- Taux de change 2027 vérifiés pour EUR/MAD/GHS, moyen ET clôture : identiques à décembre 2026 sur les 12 mois
+  (y compris la distinction moyen ≠ clôture pour MAD et GHS, préservée).
+- Entrée `audit_logs` (`fiscal_year_opened`) et notification reçue par les 3 comptes de rôle groupe (Admin,
+  Responsable consolidation, DAF lecture seule), vérifiés en base et via l'écran `/notifications`.
+- Dashboard testé sur une période 2027 (`period_id` de janvier 2027) : aucune erreur, écran vide comme attendu
+  (aucune donnée financière encore saisie pour ce nouvel exercice).
+- Base de démonstration remise à l'état de départ après test (2026 seul, statuts d'origine, aucun run).
 
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).

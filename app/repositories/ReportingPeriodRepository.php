@@ -27,4 +27,22 @@ class ReportingPeriodRepository
         $stmt = Database::connection()->prepare('UPDATE reporting_periods SET status = :status WHERE id = :id');
         $stmt->execute(['status' => $status, 'id' => $id]);
     }
+
+    /** @return ReportingPeriod[] les 12 (ou moins) périodes d'une année, triées par mois. */
+    public function forYear(int $year): array
+    {
+        $stmt = Database::connection()->prepare('SELECT * FROM reporting_periods WHERE year = :year ORDER BY month ASC');
+        $stmt->execute(['year' => $year]);
+        return array_map(fn ($row) => ReportingPeriod::fromRow($row), $stmt->fetchAll());
+    }
+
+    /** Crée une nouvelle période (statut initial 'open', début réel du cycle de vie). */
+    public function create(int $year, int $month, string $label): int
+    {
+        $stmt = Database::connection()->prepare(
+            'INSERT INTO reporting_periods (year, month, label, status) VALUES (:year, :month, :label, :status)'
+        );
+        $stmt->execute(['year' => $year, 'month' => $month, 'label' => $label, 'status' => 'open']);
+        return (int) Database::connection()->lastInsertId();
+    }
 }

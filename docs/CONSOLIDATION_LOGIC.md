@@ -466,3 +466,41 @@ lignes, dans quel ordre", partagé par l'affichage HTML et l'export CSV. Le bout
 Vérifié : export du run décembre 2026 — BZ (total actif) = DZ (total passif) = 3 084 176 188,74 XOF et
 XI (résultat net compte de résultat) = CJ (résultat net bilan) = 114 175 717,20 XOF, valeurs identiques à celles
 vérifiées à la main en Phase 5 et affichées à l'écran.
+
+## Bascule automatique d'exercice (2026-08-12)
+
+Constat utilisateur : l'application n'avait **aucun** mécanisme de passage à l'année suivante — seuls les 12
+mois de 2026 étaient seedés, sans code nulle part pour créer 2027. Une fois les 12 mois clôturés, l'app n'avait
+plus aucune période à proposer.
+
+**Déclenchement retenu (décision utilisateur)** : automatique, dès que les 12 mois d'une année sont tous
+`closed` — pas une action manuelle "Ouvrir l'exercice suivant". Implémenté dans `PeriodService::advance()` :
+après toute transition vers `closed`, `maybeOpenNextFiscalYear()` vérifie si les 12 périodes de l'année sont
+maintenant toutes clôturées. Vérification par comptage (`count(...) === 12`) plutôt que "le mois 12 vient de se
+clôturer" : rien dans le modèle n'impose de clôturer les mois dans l'ordre calendaire (chaque période a son
+propre cycle de statuts, indépendant des autres) — un utilisateur pourrait clôturer juillet avant janvier. Une
+garde d'idempotence (`forYear($year+1)` non vide → on sort) évite de recréer l'année suivante si un mois est
+clôturé après coup une fois l'exercice déjà basculé.
+
+**Taux de change (décision utilisateur : reprendre les derniers taux connus)** : les taux moyen/clôture de
+**décembre** de l'année qui se termine (pas "n'importe quel mois clôturé" — décembre est chronologiquement le
+plus récent) sont recopiés sur les 12 nouvelles périodes via `ExchangeRateRepository::upsert()`. Sans cela,
+la première saisie filiale en devise étrangère de janvier N+1 serait bloquée faute de taux (`convert()` renvoie
+`null` si le taux est absent — voir plus haut). Ce n'est qu'un point de départ : à ajuster mois par mois comme
+n'importe quelle période via l'écran Taux de change existant, aucun nouveau mécanisme de saisie nécessaire.
+
+**Notification** : les rôles groupe (`GROUP_ADMIN`, `CONSOLIDATION_MANAGER`, `CFO_READONLY`) reçoivent un
+évènement `fiscal_year_opened` — même schéma que `consolidation_ready` (Phase 7), pour rester cohérent avec le
+principe "tout évènement métier significatif notifie les bons rôles".
+
+**Ce qui n'est délibérément PAS recopié** : les budgets (processus de préparation budgétaire distinct, jamais
+automatique dans la réalité) et les données financières (évidemment — nouvel exercice, nouvelles données). Les
+nouvelles périodes démarrent au statut réel `open` (premier état du cycle de vie), pas `in_progress` comme le
+seed de démonstration de 2026 — cette dernière était une adaptation ponctuelle pour permettre de tester le
+workflow depuis n'importe quel mois (voir plus haut), pas le comportement par défaut du cycle de vie.
+
+Vérifié en conditions réelles : clôture des 12 mois de 2026 (via l'endpoint réel `/periods/{id}/transition`,
+pas un bypass), création automatique des 12 périodes 2027 (statut `open`), taux EUR/MAD/GHS de décembre 2026
+recopiés à l'identique (moyen ET clôture, valeurs distinctes préservées) sur les 12 mois de 2027, entrée
+`audit_logs` (`fiscal_year_opened`) créée, notification reçue par les 3 comptes de rôle groupe. Base de
+démonstration remise à l'état de départ après test.

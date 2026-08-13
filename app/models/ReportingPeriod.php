@@ -41,4 +41,11 @@ class ReportingPeriod
         }
         return self::SEQUENCE[$index + 1];
     }
+
+    /** Libellé standard "AAAA-MM" (mois toujours sur 2 chiffres) — utilisé à la fois par le seed et par
+     *  l'ouverture automatique de l'exercice suivant (PeriodService), pour ne jamais diverger. */
+    public static function labelFor(int $year, int $month): string
+    {
+        return sprintf('%d-%02d', $year, $month);
+    }
 }

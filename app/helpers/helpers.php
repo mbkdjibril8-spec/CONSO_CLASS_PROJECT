@@ -154,6 +154,7 @@ function notification_type_label(string $type): string
         'rejection' => 'Rejet',
         'mismatch' => 'Écart intercompany',
         'consolidation_ready' => 'Consolidation prête',
+        'fiscal_year_opened' => 'Exercice ouvert',
     ];
     return $labels[$type] ?? $type;
 }
@@ -165,6 +166,7 @@ function notification_type_badge_class(string $type): string
         'rejection' => 'badge-negative',
         'mismatch' => 'badge-warning',
         'consolidation_ready' => 'badge-positive',
+        'fiscal_year_opened' => 'badge-info',
     ];
     return $classes[$type] ?? 'badge-neutral';
 }

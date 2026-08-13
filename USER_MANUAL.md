@@ -103,6 +103,11 @@ Ouverte → En cours → Soumise → En revue → Validée → Consolidée → C
 
 Rôles groupe uniquement pour faire avancer une période. Une fois `Clôturée`, plus aucune saisie n'est possible sur cette période (y compris les taux de change).
 
+**Bascule automatique d'exercice** : dès que les 12 mois d'une année sont tous `Clôturés`, les 12 périodes de
+l'année suivante sont créées automatiquement (statut `Ouverte`), avec les taux de change de décembre repris
+comme point de départ sur les 12 nouveaux mois (à ajuster ensuite mois par mois via `Taux de change`). Les
+rôles groupe reçoivent une notification "Exercice ouvert" à ce moment-là. Aucune action manuelle requise.
+
 ## 8. Taux de change
 
 `Taux de change` (menu latéral, rôles groupe) — taux moyen (résultat) et taux de clôture (bilan) par devise et par période. Verrouillés dès que la période est clôturée.
