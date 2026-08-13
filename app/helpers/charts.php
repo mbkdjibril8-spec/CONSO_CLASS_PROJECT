@@ -240,16 +240,19 @@ function render_contribution_chart(array $contribution): string
         return '<div class="empty-state">Aucune donnée pour cette sélection.</div>';
     }
 
-    // Le SVG s'étire à la largeur de son conteneur : c'est le rapport
-    // hauteur/largeur qui détermine la taille perçue, pas $width en absolu.
-    // Des lignes plus hautes agrandissent donc réellement le graphique.
-    $width = 760;
-    $rowH = 48;
-    $barH = 26;
-    $padLeft = 130;
-    $padRight = 90;
+    // Le SVG s'étire à la largeur de son conteneur : seul le rapport
+    // hauteur/largeur du viewBox détermine la place réellement occupée.
+    // Format resserré (~1,4:1, comme le donut de répartition) pour que les
+    // deux graphiques placés côte à côte remplissent leur panneau à la même
+    // hauteur, sans bande blanche sous le plus plat des deux.
+    $rows = count($contribution);
+    $width = 520;
+    $rowH = $rows > 0 ? max(44, min(76, (int) round(($width / 1.4 - 24) / max($rows, 1)))) : 60;
+    $barH = (int) round($rowH * 0.5);
+    $padLeft = 104;
+    $padRight = 76;
     $padTop = 12;
-    $height = $padTop + count($contribution) * $rowH + 12;
+    $height = $padTop + $rows * $rowH + 12;
     $plotW = $width - $padLeft - $padRight;
 
     $max = max(array_map(fn ($r) => abs($r['ebitda']), $contribution)) ?: 1;

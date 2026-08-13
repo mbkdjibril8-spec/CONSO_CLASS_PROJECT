@@ -325,6 +325,11 @@ summary:focus-visible,
    entre graphiques complémentaires, ex. répartition + contribution). */
 .panel-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 20px; align-items: stretch; margin-bottom: 20px; }
 .panel-row .panel { margin-bottom: 0; display: flex; flex-direction: column; }
+/* Les deux panneaux ayant la même hauteur (grid stretch), le graphique le
+   plus court occupe tout l'espace restant et se centre, au lieu de laisser
+   une bande blanche sous lui. */
+.panel-row .chart-wrap,
+.panel-row .donut-wrap { flex: 1; display: flex; flex-direction: column; justify-content: center; }
 
 .panel-title {
   font-size: .78rem;
