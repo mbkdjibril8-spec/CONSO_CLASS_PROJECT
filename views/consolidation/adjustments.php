@@ -11,7 +11,7 @@ $canCreate = in_array($user->roleCode, [\App\Models\Role::GROUP_ADMIN, \App\Mode
 </div>
 
 <div class="panel" style="max-width:280px">
-    <form method="get" action="<?= h(base_url('consolidation/adjustments')) ?>" data-ajax-filter>
+    <form method="get" action="<?= h(base_url('consolidation/adjustments')) ?>" data-ajax-filter class="filter-bar">
         <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">

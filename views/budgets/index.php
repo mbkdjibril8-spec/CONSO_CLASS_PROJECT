@@ -34,8 +34,8 @@ $renderVarianceCell = function (array $row) {
 </div>
 
 <div class="panel">
-    <form method="get" action="<?= h(base_url('budgets')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="margin:0">
+    <form method="get" action="<?= h(base_url('budgets')) ?>" data-ajax-filter class="filter-bar">
+        <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
                 <?php foreach ($periods as $p): ?>
@@ -44,7 +44,7 @@ $renderVarianceCell = function (array $row) {
             </select>
         </div>
         <?php if ($user->isGroupLevel()): ?>
-            <div class="field" style="margin:0">
+            <div class="field">
                 <label for="subsidiary_id">Filiale</label>
                 <select id="subsidiary_id" name="subsidiary_id" onchange="this.form.submit()">
                     <option value="">Toutes (groupe)</option>

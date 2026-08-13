@@ -70,9 +70,17 @@ h2 { font-size: 1.2rem; }
 h3 { font-size: 1.02rem; }
 p { margin: 0 0 .75em 0; }
 
-.mono, .num, td.num, th.num {
+/* Montants et cellules chiffrées : chiffres à chasse fixe (les colonnes
+   s'alignent verticalement) ET insécables — `format_amount()` sépare les
+   milliers par une espace, qu'un navigateur traite comme un point de
+   coupure : sans `white-space: nowrap`, "1 363 651 060,27" se scindait en
+   deux lignes dès que la colonne se resserrait, décalant toute la ligne du
+   tableau. Règle centrale plutôt que répétée écran par écran. */
+.mono, .num, td.num, th.num,
+.kpi-value, .kpi-hero-value, .ohada-value {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------------
@@ -510,6 +518,22 @@ td.num, th.num { text-align: right; }
 .table-scroll { overflow-x: auto; }
 
 /* --------------------------------------------------------------------
+   Barre de filtres (période / filiale / pays…) — remplace les styles
+   inline `display:flex` qui étaient dupliqués dans 7 vues et qu'aucune
+   règle responsive ne pouvait surcharger (un style inline l'emporte sur
+   une feuille de styles). Centralisé ici : les champs s'étirent sur toute
+   la largeur en écran étroit au lieu de rester comprimés.
+   -------------------------------------------------------------------- */
+
+.filter-bar {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+.filter-bar .field { margin: 0; min-width: 160px; flex: 1 1 auto; max-width: 280px; }
+
+/* --------------------------------------------------------------------
    Budget vs Actual — tableau à deux groupes de colonnes (Mois / Cumul)
    -------------------------------------------------------------------- */
 
@@ -856,12 +880,39 @@ td.num, th.num { text-align: right; }
   .panel-row { grid-template-columns: 1fr; }
   .kpi-hero-row { grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); }
   .kpi { max-width: none; }
+
+  /* Tout tableau devient défilable horizontalement dans son panneau plutôt
+     que d'élargir la page entière. Règle unique appliquée au conteneur :
+     évite d'envelopper les 19 tableaux de l'application un par un, et
+     couvre automatiquement tout tableau ajouté par la suite. */
+  .panel { overflow-x: auto; padding: 14px 14px; }
+
+  /* Filtres : un champ par ligne, pleine largeur (cible tactile correcte). */
+  .filter-bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .filter-bar .field { max-width: none; width: 100%; }
+
+  /* Les états financiers OHADA (actif/passif côte à côte) s'empilent. */
+  .ohada-value { width: auto; }
+
+  /* Boutons d'action des en-têtes de page : sur une ligne dédiée, sans
+     débordement, et assez larges pour être touchés au doigt. */
+  .page-header > div { width: 100%; }
+  .page-header .btn { margin-bottom: 6px; }
 }
 
 @media (max-width: 560px) {
   .kpi-hero-row { grid-template-columns: repeat(2, 1fr); }
   .kpi-hero-value { font-size: 1.35rem; }
+  .kpi-hero { min-height: 92px; padding: 14px 10px; }
   .bva-toolbar { flex-direction: column; align-items: flex-start; }
+  .bva-scope-toggle { width: 100%; justify-content: space-between; }
+  .app-main { padding: 14px 12px; }
+  h1 { font-size: 1.25rem; }
+  .donut-svg { max-width: 100%; }
+
+  /* Boutons pleine largeur empilés : évite les rangées de boutons tronqués. */
+  .page-header .btn,
+  .page-header form { display: block; width: 100%; text-align: center; }
 }
 
 .text-muted { color: var(--color-text-muted); }

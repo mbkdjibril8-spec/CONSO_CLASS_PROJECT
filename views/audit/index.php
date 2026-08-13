@@ -10,8 +10,8 @@
 </div>
 
 <div class="panel">
-    <form method="get" action="<?= h(base_url('audit')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="margin:0">
+    <form method="get" action="<?= h(base_url('audit')) ?>" data-ajax-filter class="filter-bar">
+        <div class="field">
             <label for="user_id">Utilisateur</label>
             <select id="user_id" name="user_id" onchange="this.form.submit()">
                 <option value="">Tous</option>
@@ -20,7 +20,7 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="field" style="margin:0">
+        <div class="field">
             <label for="subsidiary_id">Filiale</label>
             <select id="subsidiary_id" name="subsidiary_id" onchange="this.form.submit()">
                 <option value="">Toutes</option>
@@ -29,7 +29,7 @@
                 <?php endforeach; ?>
             </select>
         </div>
-        <div class="field" style="margin:0">
+        <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
                 <option value="">Toutes</option>

@@ -23,12 +23,12 @@
     <?= render_ohada_income_statement($amounts) ?>
 </div>
 
-<div style="display:flex;gap:20px;flex-wrap:wrap">
-    <div class="panel" style="flex:1 1 460px">
+<div class="panel-row">
+    <div class="panel">
         <div class="ohada-header">Bilan — Actif</div>
         <?= render_ohada_balance_sheet_actif($amounts, $netIncome) ?>
     </div>
-    <div class="panel" style="flex:1 1 460px">
+    <div class="panel">
         <div class="ohada-header">Bilan — Passif</div>
         <?= render_ohada_balance_sheet_passif($amounts, $netIncome) ?>
     </div>

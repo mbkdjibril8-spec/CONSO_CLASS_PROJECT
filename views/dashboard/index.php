@@ -40,8 +40,8 @@ $renderKpiHero = function (string $label, string $value, ?array $kpi = null, ?st
 <?php else: ?>
 
 <div class="panel no-print">
-    <form method="get" action="<?= h(base_url('dashboard')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="margin:0">
+    <form method="get" action="<?= h(base_url('dashboard')) ?>" data-ajax-filter class="filter-bar">
+        <div class="field">
             <label for="period_id">Période</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
                 <?php foreach ($periods as $p): ?>
@@ -50,7 +50,7 @@ $renderKpiHero = function (string $label, string $value, ?array $kpi = null, ?st
             </select>
         </div>
         <?php if ($user->isGroupLevel()): ?>
-            <div class="field" style="margin:0">
+            <div class="field">
                 <label for="country">Pays</label>
                 <select id="country" name="country" onchange="this.form.submit()">
                     <option value="">Tous</option>
@@ -59,7 +59,7 @@ $renderKpiHero = function (string $label, string $value, ?array $kpi = null, ?st
                     <?php endforeach; ?>
                 </select>
             </div>
-            <div class="field" style="margin:0">
+            <div class="field">
                 <label for="subsidiary_id">Filiale</label>
                 <select id="subsidiary_id" name="subsidiary_id" onchange="this.form.submit()">
                     <option value="">Toutes (groupe)</option>

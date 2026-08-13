@@ -32,8 +32,8 @@
 <?php else: ?>
 
 <div class="panel no-print">
-    <form method="get" action="<?= h(base_url('financial-statements')) ?>" data-ajax-filter style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end">
-        <div class="field" style="margin:0">
+    <form method="get" action="<?= h(base_url('financial-statements')) ?>" data-ajax-filter class="filter-bar">
+        <div class="field">
             <label for="period_id">Période (dernier run terminé)</label>
             <select id="period_id" name="period_id" onchange="this.form.submit()">
                 <?php foreach ($periodsWithRuns as $pid => $r): ?>
@@ -69,12 +69,12 @@
     <?= render_ohada_income_statement($lineItems) ?>
 </div>
 
-<div style="display:flex;gap:20px;flex-wrap:wrap">
-    <div class="panel" style="flex:1 1 460px">
+<div class="panel-row">
+    <div class="panel">
         <div class="ohada-header">Bilan consolidé — Actif</div>
         <?= render_ohada_balance_sheet_actif($lineItems, $summary['netIncomeFullAgg']) ?>
     </div>
-    <div class="panel" style="flex:1 1 460px">
+    <div class="panel">
         <div class="ohada-header">Bilan consolidé — Passif</div>
         <?= render_ohada_balance_sheet_passif($lineItems, $summary['netIncomeFullAgg']) ?>
     </div>

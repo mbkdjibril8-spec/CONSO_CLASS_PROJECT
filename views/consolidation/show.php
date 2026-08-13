@@ -153,12 +153,12 @@ $val = fn (string $code) => $lineItems[$code] ?? 0.0;
         <div class="ohada-header">Compte de résultat consolidé au 31 <?= h($run['period_label']) ?></div>
         <?= render_ohada_income_statement($lineItems) ?>
     </div>
-    <div style="display:flex;gap:20px;flex-wrap:wrap">
-        <div class="panel" style="flex:1 1 460px">
+    <div class="panel-row">
+        <div class="panel">
             <div class="ohada-header">Bilan consolidé — Actif</div>
             <?= render_ohada_balance_sheet_actif($lineItems, $summary['netIncomeFullAgg']) ?>
         </div>
-        <div class="panel" style="flex:1 1 460px">
+        <div class="panel">
             <div class="ohada-header">Bilan consolidé — Passif</div>
             <?= render_ohada_balance_sheet_passif($lineItems, $summary['netIncomeFullAgg']) ?>
         </div>

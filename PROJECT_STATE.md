@@ -414,6 +414,35 @@ réellement. Bénéficie à tous les écrans, présents et futurs.
   bascule désormais en bandeau horizontal défilable sous la topbar (< 900px), les grilles repassent en une
   colonne, les tuiles KPI se réorganisent en 2 colonnes (< 560px).
 
+## Montants insécables + responsive approfondi (2026-08-13, second passage)
+
+### Montants coupés sur deux lignes
+`format_amount()` sépare les milliers par une espace ordinaire (convention française), qu'un navigateur traite
+comme un point de coupure légitime : dès qu'une colonne se resserrait, `1 363 651 060,27` se scindait en deux
+lignes et décalait toute la rangée du tableau. Corrigé par une règle centrale unique (`white-space: nowrap`
+ajouté au bloc `.mono, .num, td.num, th.num, .kpi-value, .kpi-hero-value, .ohada-value` qui portait déjà les
+chiffres à chasse fixe) — plutôt que colonne par colonne, pour que tout montant ajouté plus tard en hérite
+automatiquement. Choix du CSS plutôt que d'une espace insécable dans `format_amount()` : ne dépend pas du
+rendu de caractères spéciaux selon la police, et laisse les exports CSV intacts.
+
+### Barre de filtres centralisée (`.filter-bar`)
+Les 7 formulaires de filtre portaient chacun un `style="display:flex;gap:16px;..."` **inline**, dupliqué et
+surtout impossible à surcharger en responsive : un style inline l'emporte sur toute règle de feuille de styles
+(sauf `!important`). Extrait en classe `.filter-bar` : les champs peuvent désormais passer en pleine largeur
+empilée sur écran étroit, ce qui était structurellement impossible avant. Même traitement pour les conteneurs
+de bilan actif/passif côte à côte (`style="display:flex;gap:20px..."` → `.panel-row` existant).
+
+### Tableaux défilables sans toucher au HTML
+19 tableaux répartis dans 13 vues, dont aucun n'était protégé du débordement horizontal : sur écran étroit ils
+élargissaient la page entière. Plutôt que d'envelopper chacun d'un conteneur (13 fichiers à modifier, risque
+d'oubli, et tout tableau futur repartirait sans protection), une règle unique `@media (max-width: 900px) {
+.panel { overflow-x: auto } }` fait défiler le tableau **dans son panneau** — couverture automatique, y compris
+pour les écrans ajoutés par la suite.
+
+### Autres ajustements responsive
+Boutons d'en-tête de page empilés en pleine largeur sous 560px (au lieu d'une rangée tronquée), toolbar
+Budget vs Actual en colonne, tuiles KPI plus compactes, titres réduits, padding de contenu resserré.
+
 ## Décisions clés
 - **NOVA Holding exclue du périmètre bottom-up (`consolidation_method = 'excluded'`)** : la tête de groupe porte l'arbre de hiérarchie mais ne soumet pas de paquet financier propre en V1 — le scénario de démonstration du cahier des charges (§9) compte explicitement "6/6" filiales, pas 7. Documenté également dans `docs/CONSOLIDATION_LOGIC.md` (Phase 5).
 - Répertoires `app/controllers`, `app/models`, etc. restent en minuscules (conformes à l'arborescence du cahier des charges) ; les classes utilisent des namespaces `App\Controllers`, `App\Models`... en PascalCase — l'autoloader fait la conversion de casse.
