@@ -240,12 +240,16 @@ function render_contribution_chart(array $contribution): string
         return '<div class="empty-state">Aucune donnée pour cette sélection.</div>';
     }
 
+    // Le SVG s'étire à la largeur de son conteneur : c'est le rapport
+    // hauteur/largeur qui détermine la taille perçue, pas $width en absolu.
+    // Des lignes plus hautes agrandissent donc réellement le graphique.
     $width = 760;
-    $rowH = 34;
+    $rowH = 48;
+    $barH = 26;
     $padLeft = 130;
     $padRight = 90;
-    $padTop = 8;
-    $height = $padTop + count($contribution) * $rowH + 8;
+    $padTop = 12;
+    $height = $padTop + count($contribution) * $rowH + 12;
     $plotW = $width - $padLeft - $padRight;
 
     $max = max(array_map(fn ($r) => abs($r['ebitda']), $contribution)) ?: 1;
@@ -260,16 +264,16 @@ function render_contribution_chart(array $contribution): string
         $barX = $value >= 0 ? $padLeft : $padLeft - $barW;
 
         $bars .= sprintf(
-            '<text x="%d" y="%.1f" font-size="11.5" fill="#0b0b0b" text-anchor="end" dominant-baseline="middle">%s</text>',
+            '<text x="%d" y="%.1f" font-size="14" font-weight="600" fill="#0b0b0b" text-anchor="end" dominant-baseline="middle">%s</text>',
             $padLeft - 12, $cy, h($s->code)
         );
         $bars .= sprintf(
-            '<rect x="%.1f" y="%.1f" width="%.1f" height="18" rx="4" fill="%s"><title>%s : %s</title></rect>',
-            $barX, $cy - 9, $barW, $color, h($s->name), h(format_amount($value))
+            '<rect x="%.1f" y="%.1f" width="%.1f" height="%d" rx="5" fill="%s"><title>%s : %s</title></rect>',
+            $barX, $cy - $barH / 2, $barW, $barH, $color, h($s->name), h(format_amount($value))
         );
         $bars .= sprintf(
-            '<text x="%.1f" y="%.1f" font-size="11" font-weight="600" fill="#0b0b0b" text-anchor="%s" dominant-baseline="middle">%s</text>',
-            $value >= 0 ? $barX + $barW + 8 : $barX - 8, $cy,
+            '<text x="%.1f" y="%.1f" font-size="13" font-weight="700" fill="#0b0b0b" text-anchor="%s" dominant-baseline="middle">%s</text>',
+            $value >= 0 ? $barX + $barW + 10 : $barX - 10, $cy,
             $value >= 0 ? 'start' : 'end',
             h(format_compact_amount($value))
         );
