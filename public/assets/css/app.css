@@ -579,8 +579,19 @@ td.num, th.num { text-align: right; }
    les deux en-têtes de groupe (colspan=4) se partagent donc à parts égales
    l'espace restant après la colonne "Compte", et chacun le redivise en 4 —
    symétrie parfaite obtenue sans fixer la largeur de chaque colonne. */
-.bva-table { table-layout: fixed; min-width: 940px; }
+/* min-width dimensionnée sur le pire cas réel : un cumul annuel de l'ordre
+   de la dizaine de milliards ("15 590 412 521,28", 18 caractères) occupe
+   ~120px à cette taille de police. À 940px, les 8 colonnes chiffrées ne
+   recevaient que ~91px chacune : `white-space: nowrap` les empêchait bien
+   de se couper en deux lignes, mais elles se chevauchaient alors les unes
+   les autres. 210px (libellé) + 8 × 125px = 1210px, porté à 1240px par
+   sécurité — le tableau défile horizontalement dans son panneau plutôt que
+   de tasser ses colonnes. */
+.bva-table { table-layout: fixed; min-width: 1240px; }
 .bva-table .bva-account-col { width: 210px; text-align: left; }
+/* Chiffres légèrement resserrés : ~8 % de largeur gagnée sans perte de
+   lisibilité, et de l'air garanti entre deux colonnes voisines. */
+.bva-table td.num { font-size: .82rem; padding-left: 7px; padding-right: 7px; }
 
 .bva-group-head {
   text-align: center !important;

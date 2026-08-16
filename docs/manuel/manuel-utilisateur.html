@@ -1,0 +1,1131 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>OHADA_CONSO+ — Manuel utilisateur</title>
+<style>
+/* =====================================================================
+   Manuel utilisateur OHADA_CONSO+ — feuille de style d'impression.
+   Document autonome destiné à être exporté en PDF depuis le navigateur
+   (Ctrl+P → Enregistrer au format PDF). Aucune dépendance externe :
+   polices système, pas de CDN — cohérent avec la contrainte "zéro
+   dépendance" du projet et garantit un rendu identique hors ligne.
+   ===================================================================== */
+
+:root {
+  --ink:        #1a1a1a;
+  --ink-soft:   #4a4a4a;
+  --ink-faint:  #8a8a8a;
+  --rule:       #d8d8d8;
+  --rule-soft:  #ececec;
+  --accent:     #c15a1e;
+  --accent-bg:  #fdf3ec;
+  --navy:       #121e2c;
+  --positive:   #1f7a4d;
+  --negative:   #b32a26;
+  --warn:       #9a6a08;
+}
+
+@page {
+  size: A4;
+  margin: 18mm 16mm 16mm 16mm;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  font-size: 10.2pt;
+  line-height: 1.55;
+  color: var(--ink);
+  background: #fff;
+  counter-reset: figure;
+}
+
+/* --- Écran uniquement : simule la page pour la relecture avant impression */
+@media screen {
+  body { background: #e9e7e2; padding: 24px 0; }
+  .page-wrap { width: 210mm; margin: 0 auto; background: #fff; padding: 18mm 16mm; box-shadow: 0 2px 18px rgba(0,0,0,.14); }
+  .print-hint {
+    width: 210mm; margin: 0 auto 18px; padding: 12px 16px;
+    background: var(--navy); color: #fff; font-size: 9.5pt; border-radius: 4px;
+  }
+  .print-hint b { color: #ffb37a; }
+}
+@media print {
+  .print-hint { display: none; }
+  .page-wrap { width: auto; margin: 0; padding: 0; box-shadow: none; }
+}
+
+/* ---------------------------------------------------------------- COUVERTURE */
+
+.cover {
+  height: 247mm;
+  display: flex;
+  flex-direction: column;
+  page-break-after: always;
+}
+.cover-rule { height: 5px; background: var(--accent); width: 64mm; margin-bottom: 14mm; }
+.cover-eyebrow {
+  font-size: 9pt; letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 6mm;
+}
+.cover h1 {
+  font-size: 34pt; line-height: 1.08; margin: 0 0 5mm 0;
+  font-weight: 700; letter-spacing: -.015em; color: var(--navy);
+}
+.cover-sub { font-size: 14pt; color: var(--ink-soft); font-weight: 300; margin-bottom: 3mm; }
+.cover-org { font-size: 10.5pt; color: var(--accent); font-weight: 600; letter-spacing: .04em; }
+.cover-spacer { flex: 1; }
+.cover-meta {
+  border-top: 1px solid var(--rule);
+  padding-top: 5mm;
+  display: flex;
+  gap: 14mm;
+  font-size: 9pt;
+  color: var(--ink-soft);
+}
+.cover-meta dt { font-size: 7.6pt; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 1.5mm; }
+.cover-meta dd { margin: 0; font-weight: 600; color: var(--ink); }
+.cover-abstract {
+  background: var(--accent-bg);
+  border-left: 3px solid var(--accent);
+  padding: 6mm 7mm;
+  margin: 12mm 0;
+  font-size: 10pt;
+  color: var(--ink-soft);
+}
+
+/* ---------------------------------------------------------------- SOMMAIRE */
+
+.toc { page-break-after: always; }
+.toc h2 { border: none; margin-bottom: 8mm; }
+.toc ol { list-style: none; margin: 0; padding: 0; counter-reset: toc; }
+.toc > ol > li {
+  counter-increment: toc;
+  display: flex;
+  align-items: baseline;
+  gap: 3mm;
+  padding: 2.4mm 0;
+  border-bottom: 1px solid var(--rule-soft);
+  font-size: 10.4pt;
+}
+.toc > ol > li::before {
+  content: counter(toc);
+  font-variant-numeric: tabular-nums;
+  color: var(--accent);
+  font-weight: 700;
+  min-width: 7mm;
+}
+.toc .toc-part {
+  border: none; padding: 7mm 0 2mm; font-size: 8pt; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 700;
+}
+.toc .toc-part::before { content: none; }
+
+/* ---------------------------------------------------------------- TITRES */
+
+h2 {
+  font-size: 17pt;
+  color: var(--navy);
+  margin: 0 0 6mm 0;
+  padding-bottom: 3mm;
+  border-bottom: 2px solid var(--navy);
+  font-weight: 700;
+  letter-spacing: -.01em;
+  page-break-after: avoid;
+}
+h2 .num {
+  color: var(--accent);
+  margin-right: 3mm;
+  font-variant-numeric: tabular-nums;
+}
+h3 {
+  font-size: 11.6pt;
+  margin: 7mm 0 2.5mm 0;
+  color: var(--navy);
+  font-weight: 700;
+  page-break-after: avoid;
+}
+h4 {
+  font-size: 10.2pt; margin: 5mm 0 1.5mm; color: var(--ink); font-weight: 700;
+  page-break-after: avoid;
+}
+section { page-break-before: always; }
+section.no-break { page-break-before: auto; }
+
+p { margin: 0 0 3mm 0; }
+.lead { font-size: 11pt; color: var(--ink-soft); margin-bottom: 6mm; }
+
+ul, ol { margin: 0 0 3.5mm 0; padding-left: 5.5mm; }
+li { margin-bottom: 1.4mm; }
+
+strong { font-weight: 700; }
+code {
+  font-family: "Consolas", "SF Mono", monospace;
+  font-size: 8.8pt;
+  background: #f4f2ee;
+  padding: .4mm 1.4mm;
+  border-radius: 2px;
+  color: #8a3a10;
+}
+pre {
+  background: var(--navy); color: #e8e4dc; padding: 4mm 5mm; border-radius: 3px;
+  font-family: "Consolas", "SF Mono", monospace; font-size: 8.6pt; line-height: 1.5;
+  overflow-x: auto; margin: 0 0 4mm 0;
+}
+pre code { background: none; color: inherit; padding: 0; }
+
+/* ---------------------------------------------------------------- TABLEAUX */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 5mm 0;
+  font-size: 9.2pt;
+  page-break-inside: avoid;
+}
+thead th {
+  background: var(--navy);
+  color: #fff;
+  text-align: left;
+  padding: 2.4mm 3mm;
+  font-size: 8.2pt;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+tbody td { padding: 2.2mm 3mm; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+tbody tr:nth-child(even) { background: #faf9f7; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* ---------------------------------------------------------------- ENCADRÉS */
+
+.callout {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-bg);
+  padding: 3.5mm 5mm;
+  margin: 0 0 5mm 0;
+  font-size: 9.4pt;
+  page-break-inside: avoid;
+}
+.callout .label {
+  display: block; font-size: 7.6pt; letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 700; color: var(--accent); margin-bottom: 1.5mm;
+}
+.callout p:last-child { margin-bottom: 0; }
+.callout.warn { border-left-color: var(--warn); background: #fdf7e8; }
+.callout.warn .label { color: var(--warn); }
+.callout.tip { border-left-color: var(--positive); background: #eef7f2; }
+.callout.tip .label { color: var(--positive); }
+.callout.note { border-left-color: var(--navy); background: #f2f4f7; }
+.callout.note .label { color: var(--navy); }
+
+/* ---------------------------------------------------------------- CAPTURES */
+
+figure.shot {
+  margin: 0 0 6mm 0;
+  page-break-inside: avoid;
+}
+figure.shot img {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+}
+/* Gabarit affiché tant que la capture n'a pas été déposée dans /captures. */
+figure.shot .placeholder {
+  border: 1.5px dashed #c4c0b8;
+  border-radius: 3px;
+  background: repeating-linear-gradient(45deg, #fbfaf8, #fbfaf8 8px, #f5f3ef 8px, #f5f3ef 16px);
+  padding: 14mm 8mm;
+  text-align: center;
+  color: var(--ink-faint);
+}
+figure.shot .placeholder .ph-file {
+  font-family: "Consolas", monospace; font-size: 9pt; color: var(--accent);
+  font-weight: 700; display: block; margin-bottom: 2mm;
+}
+figure.shot .placeholder .ph-what { font-size: 9pt; color: var(--ink-soft); }
+/* Numérotation automatique des figures : évite de renuméroter à la main
+   chaque légende dès qu'une capture est insérée ou déplacée. */
+figure.shot { counter-increment: figure; }
+figcaption {
+  font-size: 8.4pt;
+  color: var(--ink-faint);
+  padding-top: 1.8mm;
+  border-top: 1px solid var(--rule-soft);
+  margin-top: 1.8mm;
+}
+figcaption::before {
+  content: "Figure " counter(figure) " — ";
+  color: var(--ink);
+  font-weight: 700;
+}
+figcaption b { color: var(--ink); font-weight: 700; }
+
+/* ---------------------------------------------------------------- DIVERS */
+
+.two-col { display: flex; gap: 8mm; }
+.two-col > * { flex: 1; }
+
+.kv { display: flex; gap: 3mm; font-size: 9.4pt; margin-bottom: 1.6mm; }
+.kv dt { font-weight: 700; min-width: 34mm; }
+.kv dd { margin: 0; color: var(--ink-soft); }
+
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li {
+  counter-increment: step;
+  position: relative;
+  padding-left: 9mm;
+  margin-bottom: 3mm;
+}
+.steps > li::before {
+  content: counter(step);
+  position: absolute; left: 0; top: 0;
+  width: 6mm; height: 6mm; line-height: 6mm;
+  background: var(--navy); color: #fff;
+  border-radius: 50%; text-align: center;
+  font-size: 8pt; font-weight: 700;
+}
+
+.badge {
+  display: inline-block; padding: .4mm 2mm; border-radius: 2px;
+  font-size: 8pt; font-weight: 700; letter-spacing: .02em;
+}
+.badge.b-pos { background: #e3f1ea; color: var(--positive); }
+.badge.b-neg { background: #fbe9e8; color: var(--negative); }
+.badge.b-warn { background: #fbf1dc; color: var(--warn); }
+.badge.b-info { background: #e6ecf5; color: #21456e; }
+.badge.b-neutral { background: #eceae4; color: var(--ink-soft); }
+
+.flow {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 2mm;
+  font-size: 8.6pt; margin: 0 0 5mm 0;
+}
+.flow span {
+  background: #f2f0eb; border: 1px solid var(--rule); border-radius: 2px;
+  padding: 1.4mm 2.6mm; font-weight: 600;
+}
+.flow i { color: var(--accent); font-style: normal; font-weight: 700; }
+
+.footnote { font-size: 8.4pt; color: var(--ink-faint); border-top: 1px solid var(--rule-soft); padding-top: 2mm; margin-top: 5mm; }
+</style>
+</head>
+<body>
+
+<div class="print-hint">
+  <b>Pour générer le PDF :</b> Ctrl+P → Destination « Enregistrer au format PDF » → Format A4 →
+  Marges « Par défaut » → <b>décocher</b> « En-têtes et pieds de page » → cocher « Graphiques d'arrière-plan ».
+  &nbsp;·&nbsp; Les zones hachurées attendent vos captures : déposez-les dans <code>docs/manuel/captures/</code>
+  avec le nom de fichier indiqué.
+</div>
+
+<div class="page-wrap">
+
+<!-- ================================================== COUVERTURE -->
+<div class="cover">
+  <div class="cover-rule"></div>
+  <div class="cover-eyebrow">Manuel utilisateur</div>
+  <h1>OHADA_CONSO+</h1>
+  <div class="cover-sub">Plateforme de consolidation financière<br>et de reporting de groupe</div>
+  <div class="cover-org">NOVA AFRICA GROUP</div>
+
+  <div class="cover-abstract">
+    Ce manuel décrit l'utilisation complète de la plateforme, du chargement des données financières d'une
+    filiale jusqu'à la production des états financiers consolidés au format normalisé OHADA/SYCEBNL. Il
+    s'adresse à l'ensemble des profils utilisateurs : préparateurs, contrôleurs de filiale, responsable
+    consolidation, direction financière et administrateurs.
+  </div>
+
+  <div class="cover-spacer"></div>
+
+  <div class="cover-meta">
+    <div><dt>Version</dt><dd>1.0</dd></div>
+    <div><dt>Périmètre</dt><dd>6 filiales · 4 devises</dd></div>
+    <div><dt>Référentiel</dt><dd>OHADA / SYCEBNL</dd></div>
+    <div><dt>Devise de consolidation</dt><dd>XOF (BCEAO)</dd></div>
+  </div>
+</div>
+
+<!-- ================================================== SOMMAIRE -->
+<div class="toc">
+  <h2>Sommaire</h2>
+  <ol>
+    <li class="toc-part">Prise en main</li>
+    <li>Présentation de la plateforme</li>
+    <li>Accès et connexion</li>
+    <li>Rôles et habilitations</li>
+    <li>Repères d'interface</li>
+    <li class="toc-part">Cycle de clôture mensuelle</li>
+    <li>Périodes de reporting</li>
+    <li>Taux de change</li>
+    <li>Saisie des données financières</li>
+    <li>Workflow de validation</li>
+    <li>Opérations intercompany</li>
+    <li class="toc-part">Consolidation et restitution</li>
+    <li>Moteur de consolidation</li>
+    <li>Liasse groupe (états OHADA)</li>
+    <li>Tableau de bord de direction</li>
+    <li>Budget vs Actual</li>
+    <li class="toc-part">Transverse</li>
+    <li>Notifications</li>
+    <li>Journal d'audit</li>
+    <li>Exports</li>
+    <li>Annexes</li>
+  </ol>
+</div>
+
+<!-- ================================================== 1 -->
+<section class="no-break">
+<h2><span class="num">01</span>Présentation de la plateforme</h2>
+
+<p class="lead">OHADA_CONSO+ centralise le cycle de clôture financière d'un groupe multi-filiales et
+multi-devises, de la collecte des données jusqu'aux états consolidés publiables.</p>
+
+<h3>Le besoin métier</h3>
+<p>Un groupe présent dans plusieurs pays fait face à quatre difficultés structurelles à chaque clôture :</p>
+<table>
+  <thead><tr><th style="width:38%">Difficulté</th><th>Réponse de la plateforme</th></tr></thead>
+  <tbody>
+    <tr><td><b>Données dispersées</b><br>Chaque filiale tient ses comptes de son côté.</td>
+        <td>Collecte centralisée par un formulaire unique et normalisé, ou par import CSV.</td></tr>
+    <tr><td><b>Devises hétérogènes</b><br>XOF, EUR, MAD, GHS ne s'additionnent pas.</td>
+        <td>Conversion automatique en devise de consolidation, au taux moyen pour le compte de résultat et au
+            taux de clôture pour le bilan.</td></tr>
+    <tr><td><b>Opérations internes</b><br>Une vente entre deux filiales gonflerait artificiellement le
+            chiffre d'affaires du groupe.</td>
+        <td>Rapprochement automatique des déclarations intercompany et élimination des paires cohérentes.</td></tr>
+    <tr><td><b>Fiabilité et traçabilité</b><br>Un chiffre publié doit pouvoir être justifié.</td>
+        <td>Circuit de validation à deux niveaux, journal d'audit exhaustif, moteur de consolidation dont
+            chacune des sept étapes est journalisée.</td></tr>
+  </tbody>
+</table>
+
+<h3>Le périmètre de démonstration</h3>
+<p>Le groupe NOVA AFRICA GROUP sert de jeu de démonstration. Il illustre volontairement les trois méthodes de
+consolidation prévues par les normes.</p>
+<table>
+  <thead><tr><th>Entité</th><th>Pays</th><th>Devise</th><th class="num">Détention</th><th>Méthode</th></tr></thead>
+  <tbody>
+    <tr><td>NOVA Holding</td><td>Sénégal</td><td>XOF</td><td class="num">—</td><td><span class="badge b-neutral">Exclue du périmètre</span></td></tr>
+    <tr><td>NOVA Senegal Retail</td><td>Sénégal</td><td>XOF</td><td class="num">100 %</td><td><span class="badge b-info">Intégration globale</span></td></tr>
+    <tr><td>NOVA Côte d'Ivoire</td><td>Côte d'Ivoire</td><td>XOF</td><td class="num">75 %</td><td><span class="badge b-info">Intégration globale</span></td></tr>
+    <tr><td>NOVA Mali</td><td>Mali</td><td>XOF</td><td class="num">100 %</td><td><span class="badge b-info">Intégration globale</span></td></tr>
+    <tr><td>NOVA Morocco</td><td>Maroc</td><td>MAD</td><td class="num">100 %</td><td><span class="badge b-info">Intégration globale</span></td></tr>
+    <tr><td>NOVA France</td><td>France</td><td>EUR</td><td class="num">100 %</td><td><span class="badge b-info">Intégration globale</span></td></tr>
+    <tr><td>NOVA Ghana</td><td>Ghana</td><td>GHS</td><td class="num">30 %</td><td><span class="badge b-warn">Mise en équivalence</span></td></tr>
+  </tbody>
+</table>
+
+<figure class="shot">
+  <img src="captures/16-hierarchie.png" alt="Hiérarchie de groupe"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/16-hierarchie.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Hiérarchie » : organigramme du groupe&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Organigramme du groupe. Chaque entité porte son pays, son taux de détention et
+  sa méthode de consolidation. Le bouton sous la tête de groupe permet de replier ou déplier les filiales.</figcaption>
+</figure>
+
+<div class="callout note">
+  <span class="label">À retenir</span>
+  <p>La tête de groupe ne dépose pas de liasse propre : elle porte la structure de détention. Le périmètre de
+  consolidation compte donc <b>six filiales</b>, dont cinq en intégration globale et une en mise en
+  équivalence.</p>
+</div>
+
+<h3>Vue d'ensemble du cycle</h3>
+<div class="flow">
+  <span>Saisie filiale</span><i>→</i>
+  <span>Soumission</span><i>→</i>
+  <span>Validation contrôleur</span><i>→</i>
+  <span>Rapprochement interco</span><i>→</i>
+  <span>Consolidation</span><i>→</i>
+  <span>États consolidés</span>
+</div>
+<p>Chaque étape est décrite en détail dans les chapitres 7 à 12.</p>
+</section>
+
+<!-- ================================================== 2 -->
+<section>
+<h2><span class="num">02</span>Accès et connexion</h2>
+
+<h3>Adresse d'accès</h3>
+<p>La plateforme s'ouvre dans un navigateur à l'adresse fournie par votre administrateur. En installation
+locale de démonstration : <code>http://localhost/groupfin/public/</code></p>
+
+<figure class="shot">
+  <img src="captures/01-connexion.png" alt="Écran de connexion"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/01-connexion.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Écran de connexion complet, panneau de marque à gauche et formulaire à droite&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Écran de connexion.</figcaption>
+</figure>
+
+<h3>Comptes de démonstration</h3>
+<p>Tous les comptes de démonstration partagent le mot de passe <code>Groupfin@2026</code>.</p>
+<table>
+  <thead><tr><th>Identifiant</th><th>Rôle</th><th>Périmètre</th></tr></thead>
+  <tbody>
+    <tr><td><code>admin@novaafrica.com</code></td><td>Administrateur groupe</td><td>Groupe</td></tr>
+    <tr><td><code>consolidation@novaafrica.com</code></td><td>Responsable consolidation</td><td>Groupe</td></tr>
+    <tr><td><code>cfo@novaafrica.com</code></td><td>Directeur financier</td><td>Groupe · lecture seule</td></tr>
+    <tr><td><code>preparer.sn@novaafrica.com</code></td><td>Préparateur</td><td>Sénégal</td></tr>
+    <tr><td><code>controller.sn@novaafrica.com</code></td><td>Contrôleur de filiale</td><td>Sénégal</td></tr>
+    <tr><td colspan="3" style="color:var(--ink-faint)">Le même couple <code>preparer.XX@</code> /
+        <code>controller.XX@</code> existe pour <code>ci</code> (Côte d'Ivoire), <code>ml</code> (Mali),
+        <code>ma</code> (Maroc), <code>gh</code> (Ghana) et <code>fr</code> (France).</td></tr>
+  </tbody>
+</table>
+
+<div class="callout warn">
+  <span class="label">Sécurité</span>
+  <p>Ces identifiants sont réservés à la démonstration. En exploitation réelle, chaque utilisateur dispose
+  d'un compte nominatif et le mot de passe partagé doit être supprimé.</p>
+</div>
+
+<h3>Déconnexion</h3>
+<p>Le bouton <b>Déconnexion</b> se situe en haut à droite de chaque écran. La session expire automatiquement
+après une période d'inactivité ; toute action ultérieure renvoie vers l'écran de connexion.</p>
+</section>
+
+<!-- ================================================== 3 -->
+<section>
+<h2><span class="num">03</span>Rôles et habilitations</h2>
+
+<p class="lead">Les droits reposent sur deux niveaux cumulatifs : le <b>rôle</b> détermine les fonctions
+accessibles, le <b>périmètre</b> détermine les données visibles.</p>
+
+<table>
+  <thead><tr><th style="width:26%">Rôle</th><th>Peut faire</th><th style="width:22%">Ne peut pas</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><b>Préparateur</b><br><span style="color:var(--ink-faint)">Filiale</span></td>
+      <td>Saisir et importer les données financières de sa filiale ; soumettre le paquet ; déclarer les
+          opérations intercompany.</td>
+      <td>Valider son propre paquet ; accéder à une autre filiale.</td>
+    </tr>
+    <tr>
+      <td><b>Contrôleur de filiale</b><br><span style="color:var(--ink-faint)">Filiale</span></td>
+      <td>Valider ou rejeter, avec motif, le paquet soumis par le préparateur de sa filiale.</td>
+      <td>Modifier les montants saisis ; accéder à une autre filiale.</td>
+    </tr>
+    <tr>
+      <td><b>Responsable consolidation</b><br><span style="color:var(--ink-faint)">Groupe</span></td>
+      <td>Lancer une consolidation ; poster des ajustements ; faire avancer une période ; consulter
+          l'ensemble des filiales.</td>
+      <td>Créer ou modifier une filiale.</td>
+    </tr>
+    <tr>
+      <td><b>Administrateur groupe</b><br><span style="color:var(--ink-faint)">Groupe</span></td>
+      <td>Tout ce que peut faire le responsable consolidation, plus la gestion de la structure de groupe et
+          des taux de change.</td>
+      <td>—</td>
+    </tr>
+    <tr>
+      <td><b>Directeur financier</b><br><span style="color:var(--ink-faint)">Groupe · lecture</span></td>
+      <td>Consulter tous les écrans groupe : tableau de bord, liasse, audit, exports.</td>
+      <td>Toute action de saisie, de validation ou de consolidation.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout">
+  <span class="label">Principe de cloisonnement</span>
+  <p>Un utilisateur rattaché à une filiale ne peut accéder aux données d'une autre filiale, y compris en
+  modifiant manuellement l'adresse dans le navigateur. Le contrôle est appliqué côté serveur : la tentative
+  est refusée et <b>enregistrée dans le journal d'audit</b>.</p>
+</div>
+
+<h3>Séparation des fonctions</h3>
+<p>La règle structurante du dispositif : <b>celui qui saisit n'est jamais celui qui valide</b>. Le préparateur
+produit la donnée, le contrôleur l'approuve. Cette séparation est imposée par la plateforme, elle ne repose
+pas sur une consigne d'organisation.</p>
+</section>
+
+<!-- ================================================== 4 -->
+<section>
+<h2><span class="num">04</span>Repères d'interface</h2>
+
+<figure class="shot">
+  <img src="captures/02-interface.png" alt="Vue générale de l'interface"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/02-interface.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Tableau de bord entier, avec la barre supérieure et le menu latéral bien visibles&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Structure générale : barre supérieure, menu latéral, zone de contenu.</figcaption>
+</figure>
+
+<h3>Barre supérieure</h3>
+<dl class="kv"><dt>Marque</dt><dd>Rappel de la plateforme et du groupe.</dd></dl>
+<dl class="kv"><dt>Cloche</dt><dd>Accès aux notifications ; la pastille orange indique le nombre de messages non lus.</dd></dl>
+<dl class="kv"><dt>Identité</dt><dd>Nom et rôle de l'utilisateur connecté, suivi du bouton de déconnexion.</dd></dl>
+
+<h3>Menu latéral</h3>
+<p>Le menu s'adapte au rôle : un utilisateur de filiale ne voit que les entrées qui le concernent. L'onglet
+actif est signalé par un liseré orange et une icône colorée.</p>
+
+<h3>Filtres dynamiques</h3>
+<p>Les écrans d'analyse comportent des filtres (période, filiale, pays). Leur modification recalcule
+l'affichage <b>sans recharger la page</b>. Le bouton « Précédent » du navigateur reste fonctionnel et ramène
+au filtre précédent.</p>
+
+<h3>Conventions d'affichage</h3>
+<table>
+  <thead><tr><th style="width:30%">Élément</th><th>Signification</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-pos">Vert</span></td><td>Situation favorable ou état validé.</td></tr>
+    <tr><td><span class="badge b-neg">Rouge</span></td><td>Situation défavorable, rejet ou écart bloquant.</td></tr>
+    <tr><td><span class="badge b-warn">Orange</span></td><td>Point d'attention non bloquant.</td></tr>
+    <tr><td><span class="badge b-info">Bleu</span></td><td>Information ou état intermédiaire.</td></tr>
+    <tr><td>Flèches ↑ ↓</td><td>Sens de l'écart par rapport au budget. La couleur seule n'est jamais le seul
+        signal : une flèche et une valeur chiffrée l'accompagnent systématiquement.</td></tr>
+  </tbody>
+</table>
+</section>
+
+<!-- ================================================== 5 -->
+<section>
+<h2><span class="num">05</span>Périodes de reporting</h2>
+
+<p class="lead">Chaque mois constitue une période dont le cycle de vie est strictement séquentiel : aucun saut
+d'étape, aucun retour en arrière.</p>
+
+<div class="flow">
+  <span>Ouverte</span><i>→</i><span>En cours</span><i>→</i><span>Soumise</span><i>→</i>
+  <span>En revue</span><i>→</i><span>Validée</span><i>→</i><span>Consolidée</span><i>→</i><span>Clôturée</span>
+</div>
+
+<figure class="shot">
+  <img src="captures/03-periodes.png" alt="Écran des périodes"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/03-periodes.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Périodes » : les 12 mois de l\'exercice avec leur statut&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Cycle de vie des périodes de reporting.</figcaption>
+</figure>
+
+<p>Seuls l'administrateur groupe et le responsable consolidation peuvent faire avancer une période. Les autres
+rôles y ont accès en lecture, ce qui leur permet de connaître l'état d'avancement de la clôture.</p>
+
+<div class="callout warn">
+  <span class="label">Irréversibilité</span>
+  <p>Une période <b>clôturée</b> est définitive : plus aucune saisie n'y est possible, y compris sur les taux
+  de change. Cette opération n'est pas annulable depuis l'interface.</p>
+</div>
+
+<h3>Bascule automatique d'exercice</h3>
+<p>Lorsque les douze mois d'une année sont tous clôturés, la plateforme ouvre <b>automatiquement</b> l'exercice
+suivant :</p>
+<ul>
+  <li>création des douze périodes de l'année N+1 au statut <b>Ouverte</b> ;</li>
+  <li>reprise des taux de change de décembre N sur les douze nouveaux mois, à titre de valeurs de départ ;</li>
+  <li>notification des rôles groupe et inscription au journal d'audit.</li>
+</ul>
+
+<div class="callout tip">
+  <span class="label">Bonne pratique</span>
+  <p>Les taux repris de décembre ne sont qu'un point de départ destiné à ne pas bloquer la première saisie en
+  devise étrangère. Ils doivent être actualisés mois par mois dès l'ouverture de l'exercice.</p>
+</div>
+</section>
+
+<!-- ================================================== 6 -->
+<section>
+<h2><span class="num">06</span>Taux de change</h2>
+
+<p class="lead">La conversion en devise de consolidation repose sur deux taux distincts par devise et par
+période. Cette distinction est une exigence des normes de consolidation, pas un choix technique.</p>
+
+<table>
+  <thead><tr><th style="width:26%">Taux</th><th>Appliqué à</th><th>Justification</th></tr></thead>
+  <tbody>
+    <tr><td><b>Taux moyen</b></td><td>Compte de résultat et flux de trésorerie</td>
+        <td>Ces états retracent des <b>flux</b> étalés sur toute la période : un taux moyen les représente
+            plus fidèlement qu'un taux ponctuel.</td></tr>
+    <tr><td><b>Taux de clôture</b></td><td>Bilan</td>
+        <td>Le bilan est une photographie à une <b>date donnée</b> : il se convertit au taux de cette date.</td></tr>
+  </tbody>
+</table>
+
+<figure class="shot">
+  <img src="captures/04-taux.png" alt="Écran des taux de change"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/04-taux.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Taux de change » sur décembre 2026 : EUR, MAD, GHS avec taux moyen et de clôture&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Saisie des taux moyen et de clôture par devise.</figcaption>
+</figure>
+
+<div class="callout note">
+  <span class="label">Conséquence comptable</span>
+  <p>Convertir le résultat au taux moyen et le bilan au taux de clôture génère mécaniquement un
+  <b>écart de conversion</b>. La plateforme l'isole sur les lignes prévues à cet effet par le référentiel
+  OHADA (BU à l'actif, DV au passif) et ne l'impute <b>jamais</b> au résultat net, qui reste identique entre
+  le compte de résultat et le bilan.</p>
+</div>
+
+<p>Une filiale dont le taux serait manquant est exclue de l'agrégation plutôt qu'estimée : la consolidation
+échoue explicitement en indiquant la devise concernée.</p>
+</section>
+
+<!-- ================================================== 7 -->
+<section>
+<h2><span class="num">07</span>Saisie des données financières</h2>
+
+<p class="lead">Écran réservé au préparateur de la filiale. Il couvre les trois états : compte de résultat,
+bilan et flux de trésorerie.</p>
+
+<figure class="shot">
+  <img src="captures/05-saisie.png" alt="Formulaire de saisie"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/05-saisie.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Formulaire de saisie d\'une filiale, avec le bandeau vert « Bilan équilibré » visible&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Formulaire de saisie et contrôle d'équilibre.</figcaption>
+</figure>
+
+<h3>Contrôle d'équilibre bilanciel</h3>
+<p>La plateforme vérifie en permanence l'équation fondamentale :</p>
+<pre><code>Actif = Passif + Capitaux propres + Résultat net</code></pre>
+<p>Un déséquilibre <b>bloque l'enregistrement</b> et affiche l'écart chiffré ainsi que les deux termes
+comparés. Aucun paquet déséquilibré ne peut entrer dans le système, ni a fortiori être soumis.</p>
+
+<figure class="shot">
+  <img src="captures/06-desequilibre.png" alt="Blocage sur bilan déséquilibré"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/06-desequilibre.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Message d\'erreur rouge après avoir volontairement faussé un montant du bilan&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Refus d'enregistrement avec indication de l'écart exact.</figcaption>
+</figure>
+
+<h3>Contrôle de vraisemblance</h3>
+<p>Une variation du chiffre d'affaires supérieure à 50 % par rapport au mois précédent déclenche un
+avertissement. Contrairement au contrôle d'équilibre, celui-ci est <b>non bloquant</b> : une forte variation
+peut être parfaitement légitime. Il invite simplement à vérifier avant de soumettre.</p>
+
+<h3>Import CSV</h3>
+<p>Alternative à la saisie manuelle pour les filiales disposant d'un extracteur comptable.</p>
+<ul>
+  <li>Format attendu : deux colonnes <code>account_code,amount</code>, avec ligne d'en-tête.</li>
+  <li>Le fichier peut ne couvrir qu'une partie des comptes.</li>
+  <li>Les lignes valides sont appliquées immédiatement ; les lignes invalides sont rapportées avec leur
+      <b>numéro de ligne</b> et n'empêchent pas le traitement des autres.</li>
+</ul>
+
+<div class="callout">
+  <span class="label">Verrouillage</span>
+  <p>Dès qu'un paquet quitte l'état <b>Brouillon</b>, le formulaire passe en lecture seule. Il ne redevient
+  modifiable qu'après un rejet du contrôleur.</p>
+</div>
+</section>
+
+<!-- ================================================== 8 -->
+<section>
+<h2><span class="num">08</span>Workflow de validation</h2>
+
+<p class="lead">Circuit d'approbation à deux acteurs, dont chaque transition est horodatée et attribuée.</p>
+
+<div class="flow">
+  <span>Brouillon</span><i>→</i><span>Soumis</span><i>→</i><span>Validé</span>
+  <i>&nbsp;&nbsp;ou&nbsp;&nbsp;</i>
+  <span>Soumis</span><i>→</i><span>Rejeté</span><i>→</i><span>Brouillon</span>
+</div>
+
+<h3>Côté préparateur</h3>
+<ol class="steps">
+  <li>Compléter les 22 comptes et obtenir le bandeau <b>Bilan équilibré</b>.</li>
+  <li>Cliquer sur <b>Soumettre pour validation</b>. Le bouton n'apparaît que si le paquet est complet et
+      équilibré : la validation est rejouée au moment de la soumission.</li>
+  <li>En cas de rejet, corriger les montants signalés puis soumettre de nouveau. Le nombre d'allers-retours
+      n'est pas limité.</li>
+</ol>
+
+<h3>Côté contrôleur</h3>
+<figure class="shot">
+  <img src="captures/07-revue.png" alt="Panneau de revue du contrôleur"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/07-revue.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Panneau « Revue du contrôleur » avec les boutons Valider et Rejeter et le champ motif&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Panneau de revue : validation ou rejet motivé.</figcaption>
+</figure>
+
+<ul>
+  <li><b>Valider le paquet</b> — la filiale entre dans le périmètre consolidable de la période.</li>
+  <li><b>Rejeter</b> — <b>le motif est obligatoire</b>. Il s'affiche en bandeau chez le préparateur, qui
+      retrouve la main sur son formulaire, et une notification lui est adressée.</li>
+</ul>
+
+<h3>Historique</h3>
+<p>Le bas de l'écran de saisie retrace l'intégralité des transitions du paquet : date, utilisateur, transition
+et commentaire. Cet historique est immuable.</p>
+
+<figure class="shot">
+  <img src="captures/08-historique.png" alt="Historique du workflow"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/08-historique.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Tableau « Historique du workflow » montrant le cycle soumis → rejeté → soumis → validé&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Historique complet d'un cycle de validation.</figcaption>
+</figure>
+</section>
+
+<!-- ================================================== 9 -->
+<section>
+<h2><span class="num">09</span>Opérations intercompany</h2>
+
+<p class="lead">Les opérations entre filiales du groupe doivent être neutralisées : sans cela, une vente
+interne gonflerait le chiffre d'affaires consolidé sans qu'aucun euro ne soit entré dans le groupe.</p>
+
+<h3>Principe déclaratif</h3>
+<p>Chaque filiale déclare ses opérations de son côté. La plateforme recherche la déclaration miroir et
+rapproche automatiquement les deux versions.</p>
+
+<table>
+  <thead><tr><th>Déclaration d'une filiale</th><th>Contrepartie attendue</th></tr></thead>
+  <tbody>
+    <tr><td>Créance</td><td>Dette</td></tr>
+    <tr><td>Produit</td><td>Charge</td></tr>
+    <tr><td>Dividende</td><td>Déclaration unilatérale (versement)</td></tr>
+  </tbody>
+</table>
+
+<h3>Statuts de rapprochement</h3>
+<table>
+  <thead><tr><th style="width:22%">Statut</th><th>Signification</th><th style="width:30%">Traitement en consolidation</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-warn">En attente</span></td><td>La contrepartie n'a pas encore déclaré.</td>
+        <td>Aucune élimination.</td></tr>
+    <tr><td><span class="badge b-pos">Rapproché</span></td><td>Les deux montants concordent après conversion.</td>
+        <td><b>Élimination automatique.</b></td></tr>
+    <tr><td><span class="badge b-neg">Écart</span></td><td>Les montants diffèrent.</td>
+        <td>Aucune élimination ; l'écart est signalé dans le journal du run.</td></tr>
+  </tbody>
+</table>
+
+<figure class="shot">
+  <img src="captures/09-intercompany.png" alt="Écran intercompany"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/09-intercompany.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Intercompany » avec la paire Sénégal / France en statut Écart&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Rapprochement automatique et détection d'écart.</figcaption>
+</figure>
+
+<div class="callout">
+  <span class="label">Choix de conception</span>
+  <p>Un écart n'est <b>jamais</b> éliminé silencieusement. Le forcer reviendrait à masquer une divergence réelle
+  entre deux comptabilités. Il est signalé, notifié aux deux contrôleurs et au responsable consolidation, et sa
+  résolution passe par une correction en filiale ou par un ajustement de consolidation explicite et motivé.</p>
+</div>
+</section>
+
+<!-- ================================================== 10 -->
+<section>
+<h2><span class="num">10</span>Moteur de consolidation</h2>
+
+<p class="lead">Le lancement d'une consolidation exécute une chaîne de sept étapes, chacune journalisée avec
+son résultat détaillé.</p>
+
+<h3>Conditions préalables</h3>
+<p>Le run ne démarre que si <b>toutes</b> les filiales du périmètre sont au statut <b>Validé</b> pour la
+période. Dans le cas contraire, il s'interrompt à la première étape en listant nommément les filiales
+manquantes.</p>
+
+<h3>Les sept étapes</h3>
+<table>
+  <thead><tr><th style="width:6%">#</th><th style="width:34%">Étape</th><th>Traitement</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td><b>Vérification du périmètre</b></td>
+        <td>Contrôle que chaque filiale en intégration globale ou en mise en équivalence est validée.</td></tr>
+    <tr><td class="num">2</td><td><b>Conversion et agrégation</b></td>
+        <td>Conversion de chaque filiale en devise de consolidation (taux moyen pour le résultat, taux de
+            clôture pour le bilan), puis somme compte par compte.</td></tr>
+    <tr><td class="num">3</td><td><b>Éliminations intercompany</b></td>
+        <td>Neutralisation des paires rapprochées. Les écarts sont laissés en l'état et signalés.</td></tr>
+    <tr><td class="num">4</td><td><b>Élimination des dividendes</b></td>
+        <td>Neutralisation des dividendes versés entre filiales du périmètre.</td></tr>
+    <tr><td class="num">5</td><td><b>Mise en équivalence</b></td>
+        <td>Intégration de la quote-part de résultat et des titres pour les participations non contrôlées.</td></tr>
+    <tr><td class="num">6</td><td><b>Ajustements de consolidation</b></td>
+        <td>Application des écritures manuelles postées pour la période.</td></tr>
+    <tr><td class="num">7</td><td><b>Intérêts minoritaires</b></td>
+        <td>Répartition du résultat et des capitaux propres entre part du groupe et part des actionnaires
+            minoritaires.</td></tr>
+  </tbody>
+</table>
+
+<figure class="shot">
+  <img src="captures/10-consolidation.png" alt="Écran de lancement d'une consolidation"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/10-consolidation.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Consolidation » : bloc de lancement et historique des runs&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Écran de lancement et historique des runs. Chaque run conserve son statut,
+  son auteur et son horodatage.</figcaption>
+</figure>
+
+<figure class="shot">
+  <img src="captures/10b-run.png" alt="Journal d'exécution du run"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/10b-run.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Journal d\'exécution : les 7 étapes en statut Terminé avec leurs détails&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Journal d'exécution détaillé : chaque étape indique son résultat.</figcaption>
+</figure>
+
+<h3>Ajustements de consolidation</h3>
+<p>Écritures manuelles destinées aux retraitements que le moteur ne peut pas déduire : régularisation d'un
+écart intercompany, homogénéisation d'une méthode comptable, correction ponctuelle. Chaque ajustement exige un
+<b>motif obligatoire</b>, est tracé dans le journal d'audit, et n'est pris en compte qu'au run suivant.</p>
+
+<div class="callout tip">
+  <span class="label">Relancer un run</span>
+  <p>Une consolidation peut être relancée autant de fois que nécessaire sur une même période. Chaque run est
+  conservé avec son horodatage et son auteur ; les écrans de restitution s'appuient sur le dernier run abouti.</p>
+</div>
+</section>
+
+<!-- ================================================== 11 -->
+<section>
+<h2><span class="num">11</span>Liasse groupe — états OHADA</h2>
+
+<p class="lead">Restitution des états financiers consolidés au format normalisé OHADA/SYCEBNL, référentiel
+comptable en vigueur dans dix-sept pays d'Afrique de l'Ouest et Centrale.</p>
+
+<figure class="shot">
+  <img src="captures/11-liasse.png" alt="Liasse groupe"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/11-liasse.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Liasse groupe » : compte de résultat consolidé avec les codes REF visibles&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Compte de résultat consolidé au format OHADA.</figcaption>
+</figure>
+
+<h3>Soldes intermédiaires de gestion</h3>
+<p>Le compte de résultat est structuré par les soldes normalisés, identifiés par leur code de référence :</p>
+<table>
+  <thead><tr><th style="width:14%">Code</th><th>Solde</th></tr></thead>
+  <tbody>
+    <tr><td><code>XA</code></td><td>Marge commerciale</td></tr>
+    <tr><td><code>XB</code></td><td>Chiffre d'affaires</td></tr>
+    <tr><td><code>XC</code></td><td>Valeur ajoutée</td></tr>
+    <tr><td><code>XD</code></td><td>Excédent brut d'exploitation</td></tr>
+    <tr><td><code>XE</code></td><td>Résultat d'exploitation</td></tr>
+    <tr><td><code>XF</code></td><td>Résultat financier</td></tr>
+    <tr><td><code>XG</code></td><td>Résultat des activités ordinaires</td></tr>
+    <tr><td><code>XH</code></td><td>Résultat hors activités ordinaires</td></tr>
+    <tr><td><code>XI</code></td><td><b>Résultat net</b></td></tr>
+  </tbody>
+</table>
+
+<h3>Bilan</h3>
+<p>Présenté en deux volets, actif (codes <code>AD</code> à <code>BZ</code>) et passif (codes <code>CA</code> à
+<code>DZ</code>). Les deux totaux généraux, <code>BZ</code> et <code>DZ</code>, sont rigoureusement égaux.</p>
+
+<figure class="shot">
+  <img src="captures/12-bilan.png" alt="Bilan consolidé"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/12-bilan.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Bilan consolidé actif et passif côte à côte, totaux BZ et DZ visibles&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Bilan consolidé, actif et passif.</figcaption>
+</figure>
+
+<div class="callout note">
+  <span class="label">Contrôle de cohérence</span>
+  <p>Le résultat net est <b>toujours identique</b> entre le compte de résultat (<code>XI</code>) et le bilan
+  (<code>CJ</code>). Il n'est jamais utilisé comme variable d'ajustement : un écart entre ces deux lignes
+  serait immédiatement identifié comme une anomalie par un comptable.</p>
+</div>
+
+<h3>Exports</h3>
+<ul>
+  <li><b>CSV</b> — les trois états en un fichier, structuré en sections, directement exploitable dans un
+      tableur.</li>
+  <li><b>PDF</b> — mise en page dédiée à l'impression, sans navigation, avec en-tête de document.</li>
+</ul>
+</section>
+
+<!-- ================================================== 12 -->
+<section>
+<h2><span class="num">12</span>Tableau de bord de direction</h2>
+
+<p class="lead">Vue de pilotage destinée au comité de direction, filtrable par période, pays et filiale.</p>
+
+<figure class="shot">
+  <img src="captures/13-dashboard.png" alt="Tableau de bord"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/13-dashboard.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Tableau de bord complet : tuiles KPI, courbe de tendance, donut et graphique de contribution&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Tableau de bord de direction.</figcaption>
+</figure>
+
+<h3>Composants</h3>
+<dl class="kv"><dt>Indicateurs clés</dt><dd>Chiffre d'affaires, EBITDA, résultat net et marges, chacun avec son écart au budget.</dd></dl>
+<dl class="kv"><dt>Alertes</dt><dd>Paquets non validés, écarts budgétaires significatifs, écarts intercompany, disponibilité d'une consolidation.</dd></dl>
+<dl class="kv"><dt>Tendance</dt><dd>Évolution sur douze mois des trois agrégats principaux.</dd></dl>
+<dl class="kv"><dt>Répartition</dt><dd>Poids de chaque filiale, avec bascule entre chiffre d'affaires et EBITDA.</dd></dl>
+<dl class="kv"><dt>Contribution</dt><dd>Apport de chaque filiale à l'EBITDA du groupe.</dd></dl>
+<dl class="kv"><dt>Performance</dt><dd>Tableau détaillé par filiale : réalisé, écart au budget, marge, résultat.</dd></dl>
+<dl class="kv"><dt>Situation bilancielle</dt><dd>Total bilan, capitaux propres et ratio d'endettement, issus du dernier run officiel.</dd></dl>
+
+<div class="callout warn">
+  <span class="label">Deux niveaux de lecture à ne pas confondre</span>
+  <p>Les indicateurs du tableau de bord relèvent d'une <b>vision cumulée</b> : somme des filiales en intégration
+  globale, <b>hors éliminations intercompany et hors mise en équivalence</b>. Elle est disponible pour tous les
+  mois, y compris ceux n'ayant pas fait l'objet d'un run.</p>
+  <p>Le <b>résultat consolidé officiel</b> est celui produit par un run de consolidation, présenté au chapitre 11.
+  Le panneau « Situation bilancielle groupe » n'apparaît d'ailleurs qu'une fois ce run réalisé — la plateforme
+  n'affiche jamais un chiffre consolidé qu'elle n'a pas réellement calculé.</p>
+</div>
+</section>
+
+<!-- ================================================== 13 -->
+<section>
+<h2><span class="num">13</span>Budget vs Actual</h2>
+
+<p class="lead">Suivi budgétaire compte par compte, sur le mois sélectionné et en cumul depuis janvier.</p>
+
+<figure class="shot">
+  <img src="captures/14-budget.png" alt="Budget vs Actual"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/14-budget.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Écran « Budget vs Actual » : tuiles de synthèse et tableau Mois / Cumul&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Analyse des écarts budgétaires.</figcaption>
+</figure>
+
+<h3>Lecture des écarts</h3>
+<p>Le sens favorable d'un écart dépend de la nature du compte :</p>
+<table>
+  <thead><tr><th style="width:32%">Nature</th><th>Écart favorable</th></tr></thead>
+  <tbody>
+    <tr><td>Produit (chiffre d'affaires…)</td><td>Réalisé <b>supérieur</b> au budget</td></tr>
+    <tr><td>Charge (achats, personnel…)</td><td>Réalisé <b>inférieur</b> au budget</td></tr>
+  </tbody>
+</table>
+<p>La barre affichée dans la colonne d'écart traduit l'<b>ampleur</b> de la divergence, saturée au-delà de
+30 % ; la couleur en indique le sens.</p>
+
+<p>Les boutons <b>Mois seul</b> et <b>Cumul seul</b> réduisent l'affichage à la période souhaitée, ce qui
+facilite la lecture en réunion ou en projection.</p>
+</section>
+
+<!-- ================================================== 14 -->
+<section>
+<h2><span class="num">14</span>Notifications</h2>
+
+<p class="lead">La plateforme informe automatiquement les acteurs concernés à chaque événement significatif.</p>
+
+<table>
+  <thead><tr><th style="width:30%">Événement</th><th>Destinataires</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge b-info">Soumission</span></td><td>Contrôleur de la filiale concernée.</td></tr>
+    <tr><td><span class="badge b-neg">Rejet</span></td><td>Préparateur de la filiale, avec le motif.</td></tr>
+    <tr><td><span class="badge b-warn">Écart intercompany</span></td><td>Les deux contrôleurs concernés et le responsable consolidation.</td></tr>
+    <tr><td><span class="badge b-pos">Consolidation terminée</span></td><td>Rôles groupe : administrateur, responsable consolidation, direction financière.</td></tr>
+    <tr><td><span class="badge b-info">Exercice ouvert</span></td><td>Rôles groupe, à la bascule automatique d'exercice.</td></tr>
+  </tbody>
+</table>
+
+<p>La cloche de la barre supérieure affiche le nombre de messages non lus. L'écran <b>Notifications</b> permet
+de les marquer lus individuellement ou en totalité.</p>
+</section>
+
+<!-- ================================================== 15 -->
+<section>
+<h2><span class="num">15</span>Journal d'audit</h2>
+
+<p class="lead">Registre exhaustif et non modifiable de toutes les actions effectuées dans la plateforme.
+Accessible aux seuls rôles groupe.</p>
+
+<figure class="shot">
+  <img src="captures/15-audit.png" alt="Journal d'audit"
+       onerror="this.outerHTML='&lt;div class=\'placeholder\'&gt;&lt;span class=\'ph-file\'&gt;captures/15-audit.png&lt;/span&gt;&lt;span class=\'ph-what\'&gt;Menu « Journal d\'audit » avec un filtre appliqué sur une filiale&lt;/span&gt;&lt;/div&gt;'">
+  <figcaption>Journal d'audit filtrable.</figcaption>
+</figure>
+
+<h3>Contenu d'une entrée</h3>
+<ul>
+  <li>Horodatage et utilisateur à l'origine de l'action ;</li>
+  <li>nature de l'action et entité concernée ;</li>
+  <li><b>valeur avant</b> et <b>valeur après</b> pour toute modification ;</li>
+  <li>filiale et période de rattachement.</li>
+</ul>
+
+<p>Les filtres par utilisateur, filiale et période sont combinables. Sont notamment journalisés : les
+connexions échouées, les <b>tentatives d'accès refusées</b>, les transitions de workflow, les modifications de
+structure et de taux, les ajustements et les runs de consolidation.</p>
+</section>
+
+<!-- ================================================== 16 -->
+<section>
+<h2><span class="num">16</span>Exports</h2>
+
+<table>
+  <thead><tr><th style="width:28%">Export</th><th>Contenu</th><th style="width:18%">Format</th></tr></thead>
+  <tbody>
+    <tr><td><b>Liasse groupe</b></td><td>Compte de résultat et bilan consolidés au format OHADA, tels
+        qu'affichés à l'écran.</td><td>CSV · PDF</td></tr>
+    <tr><td><b>Run de consolidation</b></td><td>Montants consolidés compte par compte, pour analyse
+        détaillée.</td><td>CSV</td></tr>
+    <tr><td><b>Paquet filiale</b></td><td>Les 22 comptes saisis pour une filiale et une période.</td><td>CSV</td></tr>
+    <tr><td><b>Vue tableau de bord</b></td><td>Indicateurs de la sélection courante, filtres appliqués.</td><td>CSV · PDF</td></tr>
+  </tbody>
+</table>
+
+<h3>Format des fichiers CSV</h3>
+<p>Séparateur point-virgule et encodage UTF-8 avec marque d'ordre d'octets : les fichiers s'ouvrent
+directement dans un tableur en configuration française, avec les accents correctement restitués et sans
+assistant d'importation.</p>
+
+<h3>Génération des PDF</h3>
+<p>Les exports PDF utilisent la fonction d'impression du navigateur. Sélectionner « Enregistrer au format
+PDF » comme destination. Une feuille de style dédiée masque la navigation, ajoute un en-tête de document et
+évite les coupures de page au milieu d'un tableau.</p>
+</section>
+
+<!-- ================================================== 17 -->
+<section>
+<h2><span class="num">17</span>Annexes</h2>
+
+<h3>A. Glossaire</h3>
+<table>
+  <thead><tr><th style="width:32%">Terme</th><th>Définition</th></tr></thead>
+  <tbody>
+    <tr><td><b>Consolidation</b></td><td>Production d'états financiers présentant un groupe de sociétés comme
+        une entité économique unique.</td></tr>
+    <tr><td><b>Intégration globale</b></td><td>Méthode appliquée aux filiales contrôlées : reprise de 100 % des
+        comptes, la part des actionnaires externes étant isolée en intérêts minoritaires.</td></tr>
+    <tr><td><b>Mise en équivalence</b></td><td>Méthode appliquée aux participations sans contrôle : seule la
+        quote-part de situation nette et de résultat est reprise.</td></tr>
+    <tr><td><b>Intérêts minoritaires</b></td><td>Part du résultat et des capitaux propres revenant aux
+        actionnaires externes d'une filiale non détenue à 100 %.</td></tr>
+    <tr><td><b>Intercompany</b></td><td>Opération réalisée entre deux entités du même groupe, à neutraliser en
+        consolidation.</td></tr>
+    <tr><td><b>Écart de conversion</b></td><td>Différence née de l'application de deux taux distincts (moyen et
+        clôture) aux états d'une filiale en devise étrangère.</td></tr>
+    <tr><td><b>EBITDA</b></td><td>Résultat avant intérêts, impôts, dotations aux amortissements et provisions.</td></tr>
+    <tr><td><b>YTD</b></td><td><i>Year to date</i> — cumul depuis le début de l'exercice.</td></tr>
+    <tr><td><b>OHADA / SYCEBNL</b></td><td>Référentiel comptable harmonisé applicable dans dix-sept États
+        d'Afrique de l'Ouest et Centrale.</td></tr>
+  </tbody>
+</table>
+
+<h3>B. Résolution des situations courantes</h3>
+<table>
+  <thead><tr><th style="width:38%">Situation</th><th>Cause et résolution</th></tr></thead>
+  <tbody>
+    <tr><td>Le bouton « Soumettre » n'apparaît pas.</td>
+        <td>Le paquet est incomplet ou déséquilibré. Compléter les comptes manquants jusqu'à obtenir le
+            bandeau <b>Bilan équilibré</b>.</td></tr>
+    <tr><td>Impossible de modifier un montant.</td>
+        <td>Le paquet a été soumis ou validé. Le contrôleur doit le rejeter pour rendre la main au
+            préparateur.</td></tr>
+    <tr><td>La consolidation refuse de démarrer.</td>
+        <td>Une filiale du périmètre au moins n'est pas validée. Le message d'erreur les liste nommément.</td></tr>
+    <tr><td>Un écart intercompany persiste après le run.</td>
+        <td>Comportement attendu : seules les paires rapprochées sont éliminées. Corriger la déclaration
+            divergente ou poster un ajustement de consolidation motivé.</td></tr>
+    <tr><td>La liasse groupe est vide.</td>
+        <td>Aucun run de consolidation n'a encore abouti sur la période sélectionnée.</td></tr>
+    <tr><td>Une période n'accepte plus aucune saisie.</td>
+        <td>Elle est clôturée. Cette opération est définitive.</td></tr>
+    <tr><td>Accès refusé sur un écran.</td>
+        <td>Le rôle ou le périmètre ne l'autorise pas. La tentative est enregistrée au journal d'audit.</td></tr>
+  </tbody>
+</table>
+
+<h3>C. Plan de comptes</h3>
+<p>La saisie repose sur un plan de comptes de 22 lignes couvrant les trois états. Deux comptes supplémentaires
+(<code>EQ_METHOD_INCOME</code> et <code>EQ_METHOD_INVESTMENT</code>) sont calculés par le moteur de
+consolidation et ne sont pas saisissables.</p>
+
+<div class="footnote">
+  Le référentiel OHADA comporte davantage de lignes que ce plan simplifié. Les lignes sans correspondance
+  s'affichent à 0,00 dans les états normalisés, exactement comme sur la liasse d'une société dont l'activité
+  ne les mouvemente pas.
+</div>
+
+<h3>D. Documentation complémentaire</h3>
+<table>
+  <thead><tr><th style="width:38%">Document</th><th>Objet</th></tr></thead>
+  <tbody>
+    <tr><td><code>GUIDE_DE_TEST.md</code></td><td>Parcours de test guidé, étape par étape.</td></tr>
+    <tr><td><code>docs/CONSOLIDATION_LOGIC.md</code></td><td>Formules, conventions de signe et justification
+        des choix de conception.</td></tr>
+    <tr><td><code>TECHNICAL_DOCUMENTATION.md</code></td><td>Architecture, sécurité, modèle de données.</td></tr>
+    <tr><td><code>README.md</code></td><td>Installation et démarrage.</td></tr>
+  </tbody>
+</table>
+
+<div class="footnote" style="margin-top:12mm">
+  OHADA_CONSO+ · Manuel utilisateur version 1.0 · NOVA AFRICA GROUP est un groupe fictif servant de jeu de
+  démonstration.
+</div>
+</section>
+
+</div>
+</body>
+</html>
